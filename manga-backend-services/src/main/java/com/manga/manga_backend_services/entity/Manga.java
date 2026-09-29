@@ -2,6 +2,8 @@ package com.manga.manga_backend_services.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -32,6 +34,10 @@ public class Manga {
     @Column(nullable = false)
     private String title;
 
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "alt_titles", columnDefinition = "jsonb")
+    private Object altTitles;
+
     @Column(columnDefinition = "TEXT")
     private String description;
 
@@ -39,38 +45,63 @@ public class Manga {
     private String coverImageUrl;
 
     @Column(name = "original_language", length = 10)
-    private String originalLanguage;
+    @Builder.Default
+    private String originalLanguage = "ja";
 
     @Column(name = "origin_type", length = 20)
-    private String originType;
+    @Builder.Default
+    private String originType = "manga";
 
     @Column(length = 20)
-    private String status;
+    @Builder.Default
+    private String status = "ongoing";
 
     @Column(name = "content_rating", length = 20)
-    private String contentRating;
+    @Builder.Default
+    private String contentRating = "safe";
 
     @Column(name = "views_count")
-    private Long viewsCount;
+    @Builder.Default
+    private Long viewsCount = 0L;
 
     @Column(name = "bookmarks_count")
-    private Integer bookmarksCount;
+    @Builder.Default
+    private Integer bookmarksCount = 0;
 
     @Column(name = "rating_score", precision = 3, scale = 2)
-    private BigDecimal ratingScore;
+    @Builder.Default
+    private BigDecimal ratingScore = BigDecimal.ZERO;
 
     @Column(name = "rating_count")
-    private Integer ratingCount;
+    @Builder.Default
+    private Integer ratingCount = 0;
 
     @Column(name = "approval_status", length = 20)
-    private String approvalStatus;
+    @Builder.Default
+    private String approvalStatus = "approved";
 
     @Column(name = "rejection_reason", columnDefinition = "TEXT")
     private String rejectionReason;
 
-    @Column(name = "created_at", insertable = false, updatable = false)
+    @Column(name = "created_at", updatable = false)
     private OffsetDateTime createdAt;
 
-    @Column(name = "updated_at", insertable = false, updatable = false)
+    @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        OffsetDateTime now = OffsetDateTime.now();
+        if (createdAt == null) {
+            createdAt = now;
+        }
+        if (updatedAt == null) {
+            updatedAt = now;
+        }
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = OffsetDateTime.now();
+    }
 }
