@@ -16,5 +16,5 @@ public class CreateBookmarkRequest {
     @NotNull(message = "Manga ID is required")
     private UUID mangaId;
 
-    private String folderType; // reading, completed, on_hold, dropped, plan_to_read
+    private String folderType; // reading, plan_to_read, completed, re_reading, dropped
 }

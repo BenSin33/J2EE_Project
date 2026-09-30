@@ -31,9 +31,9 @@ public class User {
     @Column(name = "avatar_url")
     private String avatarUrl;
 
-    @Column(length = 20)
+    @Column(length = 20, nullable = false)
     @Builder.Default
-    private String role = "USER";
+    private String role = "ROLE_USER";
 
     @Column(name = "is_banned")
     @Builder.Default

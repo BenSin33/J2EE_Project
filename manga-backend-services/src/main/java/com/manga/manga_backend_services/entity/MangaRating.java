@@ -28,7 +28,7 @@ public class MangaRating {
     @Column(name = "manga_id", nullable = false)
     private UUID mangaId;
 
-    @Column(name = "rating_star")
+    @Column(name = "rating_star", nullable = false)
     private Short ratingStar;
 
     @Column(name = "created_at", updatable = false)
