@@ -24,7 +24,6 @@ public class UpdateMangaRequest {
     private String approvalStatus;
     private String rejectionReason;
 
-    private UUID groupId;
     private List<UUID> authorIds;
     private List<UUID> tagIds;
 }

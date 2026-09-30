@@ -28,9 +28,6 @@ public class Manga {
     @Column(name = "uploader_id")
     private UUID uploaderId;
 
-    @Column(name = "group_id")
-    private UUID groupId;
-
     @Column(nullable = false)
     private String title;
 
