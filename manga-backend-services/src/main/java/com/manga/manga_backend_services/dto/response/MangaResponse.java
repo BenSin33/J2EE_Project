@@ -20,7 +20,6 @@ public class MangaResponse {
     private UUID id;
     private UUID mangadexId;
     private UUID uploaderId;
-    private UUID groupId;
     private String title;
     private Object altTitles;
     private String description;
@@ -39,7 +38,6 @@ public class MangaResponse {
     private OffsetDateTime updatedAt;
 
     // Joined relations for client consumption
-    private ScanlationGroupResponse group;
     private List<AuthorResponse> authors;
     private List<TagResponse> tags;
 }

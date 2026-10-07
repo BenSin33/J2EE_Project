@@ -27,7 +27,6 @@ public class CreateMangaRequest {
     private String status;
     private String contentRating;
 
-    private UUID groupId;
     private List<UUID> authorIds;
     private List<UUID> tagIds;
 }
