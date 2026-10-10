@@ -1,7 +1,9 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
 
-export async function fetchMangaList(page = 1, limit = 20) {
-  const res = await fetch(`${API_BASE_URL}/manga?page=${page}&limit=${limit}`, { cache: 'no-store' });
+export async function fetchMangaList(page = 0, limit = 20, keyword = '') {
+  const query = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
+  if (keyword) query.set('keyword', keyword);
+  const res = await fetch(`${API_BASE_URL}/mangas?${query.toString()}`, { cache: 'no-store' });
   if (!res.ok) throw new Error('Failed to fetch manga list');
   return res.json();
 }
