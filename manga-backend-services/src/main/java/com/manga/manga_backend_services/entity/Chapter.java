@@ -61,6 +61,9 @@ public class Chapter {
     @Column(name = "publish_at")
     private OffsetDateTime publishAt;
 
+    @Column(name = "first_published_at", insertable = false, updatable = false)
+    private OffsetDateTime firstPublishedAt;
+
     @Column(name = "created_at", updatable = false)
     private OffsetDateTime createdAt;
 

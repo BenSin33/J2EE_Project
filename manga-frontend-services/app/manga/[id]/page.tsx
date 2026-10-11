@@ -1,3 +1,6 @@
+import { RatingPanel } from '@/components/manga/RatingPanel';
+import { CommentSection } from '@/components/comments/CommentSection';
+import { FollowMangaButton } from '@/components/library/FollowMangaButton';
 import { MangaHero } from '@/components/manga/MangaHero';
 import { MangaInfo } from '@/components/manga/MangaInfo';
 import { ChapterList } from '@/components/manga/ChapterList';
@@ -6,10 +9,11 @@ import { Footer } from '@/components/common/Footer';
 import { Manga, Chapter } from '@/types/manga';
 // import { fetchMangaById, fetchChaptersByMangaId } from '@/lib/api';
 
-export default async function MangaDetailPage({ params }: { params: { id: string } }) {
+export default async function MangaDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   // Mock data fetching based on the ID for layout demonstration
   const manga: Manga = {
-    id: params.id,
+    id: id,
     title: 'Solo Leveling',
     description: '10 years ago, after "the Gate" that connected the real world with the monster world opened, some of the ordinary, everyday people received the power to hunt monsters within the Gate. They are known as "Hunters". However, not all Hunters are powerful. My name is Sung Jin-Woo, an E-rank Hunter. I\'m someone who has to risk his life in the lowliest of dungeons, the "World\'s Weakest". Having no skills whatsoever to display, I barely earned the required money by fighting in low-leveled dungeons... at least until I found a hidden dungeon with the hardest difficulty within the D-rank dungeons!',
     status: 'ONGOING',
@@ -29,7 +33,7 @@ export default async function MangaDetailPage({ params }: { params: { id: string
   const chapters: Chapter[] = [
     {
       id: 'c1',
-      mangaId: params.id,
+      mangaId: id,
       title: 'The Awakening',
       chapterNumber: '1',
       pages: [],
@@ -40,7 +44,7 @@ export default async function MangaDetailPage({ params }: { params: { id: string
     },
     {
       id: 'c2',
-      mangaId: params.id,
+      mangaId: id,
       title: 'Dungeon',
       chapterNumber: '2',
       pages: [],
@@ -60,7 +64,10 @@ export default async function MangaDetailPage({ params }: { params: { id: string
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             <MangaInfo manga={manga} />
+            <RatingPanel key={id} mangaId={id} />
+            <FollowMangaButton key={id} mangaId={id} />
             <ChapterList chapters={chapters} />
+            <CommentSection key={id} mangaId={id} />
           </div>
           <div className="hidden lg:block space-y-6">
             <div className="bg-[#16161a] border border-gray-800 rounded-xl p-6">

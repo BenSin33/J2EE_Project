@@ -1,3 +1,5 @@
+import { NotificationBell } from '@/components/notifications/NotificationBell'
+import Link from 'next/link'
 import { useState } from 'react'
 
 const genres = ['Action', 'Romance', 'Fantasy', 'Isekai', 'Shounen', 'Horror', 'Slice of Life', 'Mecha']
@@ -12,7 +14,6 @@ export default function Navbar({ darkMode, onToggleDark }: NavbarProps) {
   const [filterOpen, setFilterOpen] = useState(false)
   const [filterType, setFilterType] = useState<'Genre' | 'Status'>('Genre')
   const [query, setQuery] = useState('')
-  const [notifOpen, setNotifOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
 
   return (
@@ -125,7 +126,7 @@ export default function Navbar({ darkMode, onToggleDark }: NavbarProps) {
         <div className="hidden lg:flex items-center gap-1">
           {[
             { label: 'Browse', href: '#' },
-            { label: 'Bookmarks', href: '#' },
+            { label: 'Tủ sách', href: '/library' },
           ].map(link => (
             <a
               key={link.label}
@@ -158,45 +159,7 @@ export default function Navbar({ darkMode, onToggleDark }: NavbarProps) {
             )}
           </button>
 
-          {/* Notification bell */}
-          <div className="relative">
-            <button
-              onClick={() => setNotifOpen(o => !o)}
-              className="w-9 h-9 rounded-lg flex items-center justify-center transition-colors relative"
-              style={{ color: '#a0a0b0', background: 'rgba(255,255,255,0.04)' }}
-            >
-              <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
-                <path d="M8.5 1.5a5 5 0 0 1 5 5v2.5l1.5 2H2l1.5-2V6.5a5 5 0 0 1 5-5z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
-                <path d="M6.5 13a2 2 0 0 0 4 0" stroke="currentColor" strokeWidth="1.4" />
-              </svg>
-              <span
-                className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full border-2"
-                style={{ background: '#8b5cf6', borderColor: '#121214' }}
-              />
-            </button>
-
-            {notifOpen && (
-              <div
-                className="absolute right-0 top-11 rounded-xl border p-3 z-50 w-80"
-                style={{ background: '#202026', borderColor: 'rgba(255,255,255,0.1)', boxShadow: '0 20px 40px rgba(0,0,0,0.6)' }}
-              >
-                <p className="text-sm font-semibold mb-3" style={{ color: '#f0f0f4', fontFamily: 'Outfit,sans-serif' }}>Notifications</p>
-                {[
-                  { title: 'Solo Leveling Ch. 200 released', time: '5 min ago', dot: '#8b5cf6' },
-                  { title: 'Chainsaw Man Ch. 185 is out', time: '1 hour ago', dot: '#a78bfa' },
-                  { title: 'New chapter: Berserk Ch. 374', time: '3 hours ago', dot: '#7c3aed' },
-                ].map((n, i) => (
-                  <div key={i} className="flex items-start gap-3 py-2">
-                    <div className="w-2 h-2 rounded-full mt-1.5 shrink-0" style={{ background: n.dot }} />
-                    <div>
-                      <p className="text-sm" style={{ color: '#f0f0f4', fontFamily: 'Inter,sans-serif' }}>{n.title}</p>
-                      <p className="text-xs" style={{ color: '#606070', fontFamily: 'Inter,sans-serif' }}>{n.time}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <NotificationBell />
 
           {/* Avatar */}
           <div className="relative">
@@ -218,7 +181,8 @@ export default function Navbar({ darkMode, onToggleDark }: NavbarProps) {
                   <p className="text-xs" style={{ color: '#606070' }}>akira@example.com</p>
                 </div>
                 <div className="border-t mb-1" style={{ borderColor: 'rgba(255,255,255,0.07)' }} />
-                {['My Library', 'Reading History', 'Settings', 'Sign Out'].map(item => (
+                {[{ label: 'Tủ sách', href: '/library' }, { label: 'Lịch sử đọc', href: '/history' }].map(item => <Link key={item.href} href={item.href} className="block rounded-lg px-3 py-2 text-sm text-gray-300 hover:text-white">{item.label}</Link>)}
+                {['Settings', 'Sign Out'].map(item => (
                   <button
                     key={item}
                     className="w-full text-left px-3 py-2 rounded-lg text-sm transition-colors hover:text-white"

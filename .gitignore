@@ -53,6 +53,7 @@ desktop.ini
 # 4. Node.js / Frontend (Next.js & Vite)
 # ==========================================
 **/node_modules/
+**/.npm-cache/
 **/.pnpm-store/
 **/dist/
 **/build/
