@@ -1,51 +1,39 @@
 'use client';
-import { useState } from 'react';
-import { ReaderCanvas } from '@/components/reader/ReaderCanvas';
+import { CommentSection } from '@/components/comments/CommentSection';
+import { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
+import Link from 'next/link';
+import { DemoProgressReader } from '@/components/reader/DemoProgressReader';
 import { ReaderToolbar } from '@/components/reader/ReaderToolbar';
 import { SettingsModal } from '@/components/reader/SettingsModal';
-// import { fetchChapterById } from '@/lib/api';
-
-export default function ChapterPage({ params }: { params: { chapterId: string } }) {
+import { fetchReaderChapter } from '@/lib/api';
+import { ReaderChapter } from '@/types/reader';
+function ChapterReader({ chapterId }: { chapterId: string }) {
+  const [chapter, setChapter] = useState<ReaderChapter | null>(null);
+  const [error, setError] = useState('');
+  const [attempt, setAttempt] = useState(0);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-
-  // Mock data for demonstration
-  const chapter = {
-    id: params.chapterId,
-    mangaId: 'manga-123',
-    title: 'Beginning of the End',
-    chapterNumber: '1',
-    hash: 'mock-hash-123',
-    pages: [
-      { id: 'p1', url: '1.jpg', pageNumber: 1 },
-      { id: 'p2', url: '2.jpg', pageNumber: 2 },
-      { id: 'p3', url: '3.jpg', pageNumber: 3 },
-    ]
-  };
-
-  return (
-    <main className="min-h-screen bg-[#0a0a0c] text-gray-100 relative pb-20">
-      <div className="sticky top-0 z-40 bg-[#16161a]/90 backdrop-blur-md border-b border-gray-800 p-4">
-        <div className="max-w-4xl mx-auto flex justify-between items-center">
-          <h1 className="font-bold">Chapter {chapter.chapterNumber} {chapter.title && `- ${chapter.title}`}</h1>
-        </div>
-      </div>
-      
-      <ReaderCanvas 
-        pages={chapter.pages} 
-        sourceType="mangadex_at_home" 
-        hash={chapter.hash} 
-      />
-
-      <ReaderToolbar 
-        mangaId={chapter.mangaId} 
-        chapterNumber={chapter.chapterNumber}
-        onOpenSettings={() => setIsSettingsOpen(true)}
-      />
-
-      <SettingsModal 
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-      />
-    </main>
-  );
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchReaderChapter(chapterId, controller.signal).then(setChapter).catch(err => {
+      if (!controller.signal.aborted) setError(err instanceof Error ? err.message : 'Không kết nối được backend.');
+    });
+    return () => controller.abort();
+  }, [chapterId, attempt]);
+  if (error) return <main className="p-8 text-center" role="alert"><p>{error}</p><button className="mt-4 rounded bg-gray-700 px-4 py-2" onClick={() => { setError(''); setChapter(null); setAttempt(a => a + 1); }}>Thử lại</button></main>;
+  if (!chapter) return <main className="p-8 text-center" role="status">Đang tải chương…</main>;
+  return <main className="relative min-h-screen bg-[#0a0a0c] pb-24 text-gray-100">
+    <header className="sticky top-0 z-40 border-b border-gray-800 bg-[#16161a]/90 p-4 backdrop-blur-md"><div className="mx-auto max-w-4xl">
+      <h1 className="font-bold">Chương {chapter.chapterNumber} — {chapter.title}</h1><p className="text-sm text-gray-400">{chapter.totalPages} trang · {chapter.source}</p>
+      <Link href="/history" className="text-sm text-violet-300">Lịch sử đọc</Link>
+    </div></header>
+    {chapter.chapterId === '33333333-3333-4333-8333-333333333333' ? <DemoProgressReader chapter={chapter} /> : <DemoProgressReader chapter={chapter} demo={false} />}
+    <CommentSection key={chapter.chapterId} mangaId={chapter.mangaId} chapterId={chapter.chapterId} />
+    <ReaderToolbar mangaId={chapter.mangaId} chapterNumber={chapter.chapterNumber} onOpenSettings={() => setIsSettingsOpen(true)} />
+    <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+  </main>;
+}
+export default function ChapterPage() {
+  const { chapterId } = useParams<{ chapterId: string }>();
+  return <ChapterReader key={chapterId} chapterId={chapterId} />;
 }

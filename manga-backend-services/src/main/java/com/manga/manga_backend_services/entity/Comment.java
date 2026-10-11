@@ -42,6 +42,13 @@ public class Comment {
     @Builder.Default
     private Boolean isHidden = false;
 
+    @Column(name = "is_deleted", nullable = false)
+    @Builder.Default
+    private Boolean isDeleted = false;
+
+    @Column(name = "updated_at")
+    private OffsetDateTime updatedAt;
+
     @Column(name = "created_at", updatable = false)
     private OffsetDateTime createdAt;
 

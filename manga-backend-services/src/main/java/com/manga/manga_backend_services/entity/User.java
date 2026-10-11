@@ -43,6 +43,12 @@ public class User {
     @Builder.Default
     private Boolean isMuted = false;
 
+    @Column(name = "muted_until")
+    private OffsetDateTime mutedUntil;
+
+    @Column(name = "mute_reason")
+    private String muteReason;
+
     @Column(name = "created_at", updatable = false)
     private OffsetDateTime createdAt;
 

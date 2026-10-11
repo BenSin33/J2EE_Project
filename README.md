@@ -6,7 +6,8 @@ Dự án môn J2EE sử dụng Next.js cho frontend, Spring Boot cho backend và
 
 - `manga-backend-services/`: ứng dụng Spring Boot, Maven Wrapper, entity, DTO và API.
 - `manga-frontend-services/`: ứng dụng Next.js App Router, TypeScript và Tailwind CSS.
-- `Database/Project_setup_database.sql`: script khởi tạo schema PostgreSQL.
+- `Database/project_database_v2.sql`: schema tham chiếu PostgreSQL (file có cảnh báo không chạy toàn bộ).
+- `Database/migrations/`: các migration bổ sung cho database hiện có.
 - `docs/`: tài liệu dự án.
 
 ## 2. Yêu cầu môi trường
@@ -38,7 +39,7 @@ Nếu Maven không tìm thấy Java, đặt JAVA_HOME tới thư mục JDK 21 v�
 
 1. Mở project Supabase của nhóm, lấy thông tin kết nối PostgreSQL ở mục Connect.
 2. Dùng database của nhóm đã được khởi tạo, hoặc tạo database/project riêng để phát triển.
-3. Với database mới chưa có các bảng, mở SQL Editor và chạy nội dung file `Database/Project_setup_database.sql`.
+3. Với database mới chưa có các bảng, dùng script khởi tạo thực thi đã được nhóm kiểm tra. File `Database/project_database_v2.sql` hiện có là schema tham chiếu, không chạy toàn bộ vì thứ tự bảng và constraint có thể chưa hợp lệ.
 4. Nếu database đã có các bảng này, không chạy lại toàn bộ script: phần CREATE TABLE không có IF NOT EXISTS. Dùng migration được nhóm thống nhất để cập nhật schema.
 
 Script chỉ tạo schema, không thêm truyện hoặc chương mẫu. Backend cấu hình `spring.jpa.hibernate.ddl-auto=none`, nên không tự tạo bảng khi khởi động.
@@ -80,7 +81,7 @@ Database chưa có truyện có thể trả danh sách rỗng. API chi tiết d�
 GET http://localhost:8080/api/v1/mangas/<MANGA_UUID>
 ```
 
-Swagger dự kiến ở `http://localhost:8080/swagger-ui/index.html`, nhưng pom.xml đang dùng springdoc-openapi 2.6.0 cùng Spring Boot 4.1.1. Theo [bảng tương thích springdoc](https://springdoc.org/), Spring Boot 4 cần springdoc 3.x. Nếu build/khởi động hoặc Swagger lỗi liên quan springdoc, nhóm cần chọn bản 3.x phù hợp; hướng dẫn này chưa thay đổi dependency.
+Swagger ở `http://localhost:8080/swagger-ui/index.html`. Backend đã cập nhật springdoc-openapi lên 3.1.1 cho Spring Boot 4 theo [hướng dẫn springdoc](https://springdoc.org/getting-started.html).
 
 Cấu hình SecurityConfig hiện cho phép truy cập /api/v1/** mà không xác thực. Đây là trạng thái phát triển hiện tại; các luồng tài khoản và quyền tương tác chưa được bảo vệ đầy đủ.
 
@@ -120,7 +121,7 @@ Không đưa mật khẩu database hoặc service role key vào biến NEXT_PUBL
 
 Đổi NEXT_PUBLIC_API_URL không giải quyết khác biệt manga/mangas. Cần thống nhất đường dẫn, response và phân trang trước khi ghép dữ liệu thật. API danh sách hiện trả List<Manga>, chưa xử lý page/limit.
 
-Entity và DTO đã có cho một số chức năng tương tác, nhưng chưa có controller/service hoàn chỉnh cho bookmark, lịch sử, bình luận và rating. Schema hiện cũng chưa có bảng notification, cờ bật thông báo bookmark hay cấu trúc thành viên/quyền theo nhóm đầy đủ; cần bổ sung theo đặc tả trước khi triển khai các luồng đó.
+Đã có API UC09 và Bookmark yêu cầu xác thực, trang /history và /library. Cần nối xác thực với thành viên 1 và dữ liệu truyện/chương thật với thành viên 2 để thử luồng tài khoản. Trước khi dùng Bookmark, chạy Database/migrations/001_bookmark_notifications.sql; xem docs/bookmark-library.md. Đã có bình luận/trả lời/spoiler và sửa/xóa mềm; xem docs/comments.md và migration 002. Đã có API Rating và giao diện chọn sao; đã có API/giao diện thông báo và worker, cần nối vào luồng xuất bản của thành viên 2; xem docs/notifications.md.
 
 ## 7. Lệnh kiểm tra và build
 
@@ -165,3 +166,23 @@ Chạy build thành công trước start. Lint và build là hai bước riêng.
 Ưu tiên: API danh sách trang chương và Reader → tiến độ/lịch sử đọc → bookmark → bình luận/rating → thông báo chương LOCAL lần đầu xuất bản. Phối hợp thành viên 1 về người dùng đăng nhập, thành viên 2 về truyện/chương và sự kiện xuất bản, thành viên 4 về nội dung bị ẩn và kiểm duyệt.
 
 Lộ trình chức năng không phản ánh toàn bộ tính năng đã hoàn thành trong repository. Tài liệu này mô tả cấu hình và giới hạn hiện có; cần chạy kiểm tra sau khi nhóm giải quyết các điểm tích hợp nêu trên.
+
+## Cập nhật môi trường ngày 11 10 2026
+
+Frontend đã đồng bộ eslint-config-next 16.4.0 với Next.js hiện tại. Chạy npm.cmd ci sau khi lấy code mới. Backend dùng springdoc 3.1.1; Maven Wrapper và 2 test Reader đã được kiểm tra thành công. API Reader demo cần READER_DEMO_ENABLED=true; xem [mẫu bàn giao Reader](docs/reader-api-sample.md). Lỗi AccessDenied Maven trong phiên hỗ trợ trước là giới hạn sandbox, không cần xóa cache trên máy người dùng.
+
+## Bookmark và Tủ sách
+
+Mở http://localhost:3000/library. Xem [hướng dẫn Bookmark](docs/bookmark-library.md) và chạy [migration cờ thông báo](Database/migrations/001_bookmark_notifications.sql) trong Supabase SQL Editor trước khi gọi API với tài khoản đã đăng nhập. Migration mới chưa được tự chạy vào database nhóm. Trang chi tiết truyện có nút Theo dõi nhưng metadata vẫn đang dùng mock; cần UUID truyện thật để tạo bookmark.
+
+## Bình luận
+
+Đã ghép bình luận/trả lời vào trang truyện và Reader. Chạy [migration 002](Database/migrations/002_comments_soft_delete_and_mute.sql) trước khi dùng với dữ liệu thật; xem [API và hướng dẫn bình luận](docs/comments.md). Guest xem được nội dung công khai; tạo/sửa/xóa cần xác thực và không bị ban/mute theo quy tắc.
+
+## Rating
+
+Đã ghép Rating 1–5 sao vào trang truyện, bỏ điểm mẫu. Xem [API và hướng dẫn Rating](docs/rating.md). Dùng bảng manga_ratings hiện có, không cần migration mới nếu schema đúng. Tạo/cập nhật cần xác thực, xem điểm tổng hợp là công khai.
+
+## Thông báo chương mới
+
+Mở http://localhost:3000/notifications. Chạy [migration 003](Database/migrations/003_chapter_notifications.sql) sau migration 001, rồi bật `NOTIFICATIONS_WORKER_ENABLED=true` và khởi động lại backend. Xem [hướng dẫn tích hợp thông báo](docs/notifications.md) để thành viên 2 gọi service trong transaction xuất bản. Cần nối xác thực của thành viên 1 để dùng hộp thông báo cá nhân.

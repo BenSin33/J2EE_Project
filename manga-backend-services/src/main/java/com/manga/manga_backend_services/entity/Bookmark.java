@@ -32,6 +32,10 @@ public class Bookmark {
     @Builder.Default
     private String folderType = "reading";
 
+    @Column(name = "notifications_enabled", nullable = false)
+    @Builder.Default
+    private Boolean notificationsEnabled = false;
+
     @Column(name = "created_at", updatable = false)
     private OffsetDateTime createdAt;
 

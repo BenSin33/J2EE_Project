@@ -1,0 +1,2 @@
+export interface Comment { id: string; mangaId: string; chapterId: string | null; parentId: string | null; username: string; content: string; spoiler: boolean; hidden: boolean; deleted: boolean; createdAt: string; updatedAt: string | null; replyCount: number; canEdit: boolean; canDelete: boolean; }
+export interface CommentPage { items: Comment[]; page: number; size: number; totalElements: number; }
