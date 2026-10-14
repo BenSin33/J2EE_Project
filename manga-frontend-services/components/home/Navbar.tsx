@@ -125,17 +125,18 @@ export default function Navbar({ darkMode, onToggleDark }: NavbarProps) {
         {/* Nav links */}
         <div className="hidden lg:flex items-center gap-1">
           {[
-            { label: 'Browse', href: '#' },
+            { label: 'Browse', href: '/' },
             { label: 'Tủ sách', href: '/library' },
+            { label: 'Admin', href: '/admin' },
           ].map(link => (
-            <a
+            <Link
               key={link.label}
               href={link.href}
               className="px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:text-white"
               style={{ color: '#a0a0b0', fontFamily: 'Inter, sans-serif' }}
             >
               {link.label}
-            </a>
+            </Link>
           ))}
         </div>
 
@@ -181,7 +182,7 @@ export default function Navbar({ darkMode, onToggleDark }: NavbarProps) {
                   <p className="text-xs" style={{ color: '#606070' }}>akira@example.com</p>
                 </div>
                 <div className="border-t mb-1" style={{ borderColor: 'rgba(255,255,255,0.07)' }} />
-                {[{ label: 'Tủ sách', href: '/library' }, { label: 'Lịch sử đọc', href: '/history' }].map(item => <Link key={item.href} href={item.href} className="block rounded-lg px-3 py-2 text-sm text-gray-300 hover:text-white">{item.label}</Link>)}
+                {[{ label: 'Tủ sách', href: '/library' }, { label: 'Lịch sử đọc', href: '/history' }, { label: 'Trang Admin', href: '/admin' }].map(item => <Link key={item.href} href={item.href} className="block rounded-lg px-3 py-2 text-sm text-gray-300 hover:text-white">{item.label}</Link>)}
                 {['Settings', 'Sign Out'].map(item => (
                   <button
                     key={item}

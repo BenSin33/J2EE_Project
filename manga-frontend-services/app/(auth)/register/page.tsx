@@ -27,8 +27,9 @@ export default function RegisterPage() {
       setTimeout(() => {
         router.push('/login')
       }, 2000)
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Registration failed. Please try again.')
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { message?: string } } };
+      setError(axiosErr.response?.data?.message || 'Registration failed. Please try again.')
     } finally {
       setIsLoading(false)
     }

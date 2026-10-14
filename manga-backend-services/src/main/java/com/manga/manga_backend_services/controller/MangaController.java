@@ -11,15 +11,21 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
+import com.manga.manga_backend_services.dto.response.ChapterResponse;
+import com.manga.manga_backend_services.service.MangaDexService;
+import java.util.List;
+
 @RestController
 @RequestMapping({"/api/v1/mangas", "/api/v1/manga"})
 @CrossOrigin(origins = "http://localhost:3000") // Mở sẵn cho Next.js gọi
 public class MangaController {
 
     private final MangaRepository mangaRepository;
+    private final MangaDexService mangaDexService;
 
-    public MangaController(MangaRepository mangaRepository) {
+    public MangaController(MangaRepository mangaRepository, MangaDexService mangaDexService) {
         this.mangaRepository = mangaRepository;
+        this.mangaDexService = mangaDexService;
     }
 
     /**
@@ -53,5 +59,10 @@ public class MangaController {
         return mangaRepository.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/{id}/chapters")
+    public ResponseEntity<List<ChapterResponse>> getChaptersByMangaId(@PathVariable UUID id) {
+        return ResponseEntity.ok(mangaDexService.getChaptersByMangaId(id));
     }
 }

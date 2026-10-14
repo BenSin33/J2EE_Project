@@ -1,3 +1,5 @@
+import { useAuthStore } from '@/store/authStore';
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
 
 export async function fetchMangaList(page = 0, limit = 20, keyword = '') {
@@ -54,7 +56,12 @@ export async function saveDemoProgress(mangaId: string, chapterId: string, lastP
 
 export class ReaderApiError extends Error { constructor(public status: number, message: string) { super(message); } }
 async function readerAccountRequest(path: string, options: RequestInit = {}) {
-  const res = await fetch(API_BASE_URL + '/me/' + path, { ...options, credentials: 'include', cache: 'no-store' });
+  const token = typeof window !== 'undefined' ? useAuthStore.getState().token : null;
+  const headers = new Headers(options.headers || {});
+  if (token && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+  const res = await fetch(API_BASE_URL + '/me/' + path, { ...options, headers, credentials: 'include', cache: 'no-store' });
   if (!res.ok) throw new ReaderApiError(res.status, res.status === 401 ? 'Bạn cần đăng nhập để dùng chức năng này.' : res.status === 403 ? 'Tài khoản không được phép thực hiện thao tác.' : 'Không thực hiện được thao tác (HTTP ' + res.status + ').');
   const text = await res.text();
   return text ? JSON.parse(text) : null;
@@ -89,7 +96,10 @@ export async function getComments(mangaId: string, chapterId?: string, parentId?
   const params = new URLSearchParams({ page: String(page), size: '20' });
   if (chapterId) params.set('chapterId', chapterId);
   if (parentId) params.set('parentId', parentId);
-  const res = await fetch(API_BASE_URL + '/mangas/' + encodeURIComponent(mangaId) + '/comments?' + params, { credentials: 'include', cache: 'no-store', signal });
+  const token = typeof window !== 'undefined' ? useAuthStore.getState().token : null;
+  const headers = new Headers();
+  if (token) headers.set('Authorization', `Bearer ${token}`);
+  const res = await fetch(API_BASE_URL + '/mangas/' + encodeURIComponent(mangaId) + '/comments?' + params, { headers, credentials: 'include', cache: 'no-store', signal });
   if (!res.ok) throw new Error(res.status === 404 ? 'Nội dung không còn khả dụng để xem bình luận.' : 'Không tải được bình luận.');
   return res.json();
 }
@@ -104,7 +114,10 @@ export async function deleteComment(id: string): Promise<null> {
 }
 
 export async function getRating(mangaId: string, signal?: AbortSignal): Promise<import('@/types/rating').RatingSummary> {
-  const res = await fetch(API_BASE_URL + '/mangas/' + encodeURIComponent(mangaId) + '/rating', { credentials: 'include', cache: 'no-store', signal });
+  const token = typeof window !== 'undefined' ? useAuthStore.getState().token : null;
+  const headers = new Headers();
+  if (token) headers.set('Authorization', `Bearer ${token}`);
+  const res = await fetch(API_BASE_URL + '/mangas/' + encodeURIComponent(mangaId) + '/rating', { headers, credentials: 'include', cache: 'no-store', signal });
   if (!res.ok) throw new Error(res.status === 404 ? 'Truyện không còn khả dụng để đánh giá.' : 'Không tải được điểm đánh giá.');
   return res.json();
 }
