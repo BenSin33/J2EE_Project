@@ -202,3 +202,78 @@ CREATE TABLE public.home_showcases (
   CONSTRAINT fk_home_showcases_manga FOREIGN KEY (manga_id) REFERENCES public.mangas(id),
   CONSTRAINT fk_home_showcases_creator FOREIGN KEY (created_by) REFERENCES public.users(id)
 );
+
+-- ==========================================
+-- DUMMY DATA FOR TESTING
+-- ==========================================
+
+-- 1. Users
+INSERT INTO public.users (id, username, email, password_hash, role) VALUES 
+('11111111-1111-1111-1111-111111111111', 'admin', 'admin@example.com', '$2a$10$slYQmyNdGzTn7ZLBDIbfPh9tlvRo9D.M.g58D/f1.O6Uf9B9q.31e', 'ROLE_ADMIN'),
+('22222222-2222-2222-2222-222222222222', 'uploader_1', 'uploader@example.com', '$2a$10$slYQmyNdGzTn7ZLBDIbfPh9tlvRo9D.M.g58D/f1.O6Uf9B9q.31e', 'ROLE_UPLOADER'),
+('33333333-3333-3333-3333-333333333333', 'akira_reader', 'akira@example.com', '$2a$10$slYQmyNdGzTn7ZLBDIbfPh9tlvRo9D.M.g58D/f1.O6Uf9B9q.31e', 'ROLE_USER');
+
+-- 2. User Settings
+INSERT INTO public.user_settings (user_id, reader_theme) VALUES 
+('33333333-3333-3333-3333-333333333333', 'dark');
+
+-- 3. Scanlation Groups
+INSERT INTO public.scanlation_groups (id, name, leader_id) VALUES 
+('a0000000-0000-0000-0000-000000000001', 'Manga VN Group', '22222222-2222-2222-2222-222222222222');
+
+-- 4. Authors
+INSERT INTO public.authors (id, name) VALUES 
+('b0000000-0000-0000-0000-000000000001', 'Oda Eiichiro'),
+('b0000000-0000-0000-0000-000000000002', 'Kishimoto Masashi');
+
+-- 5. Tags
+INSERT INTO public.tags (id, name) VALUES 
+('c0000000-0000-0000-0000-000000000001', 'Action'),
+('c0000000-0000-0000-0000-000000000002', 'Adventure'),
+('c0000000-0000-0000-0000-000000000003', 'Romance');
+
+-- 6. Mangas
+INSERT INTO public.mangas (id, uploader_id, title, description, cover_image_url) VALUES 
+('d0000000-0000-0000-0000-000000000001', '22222222-2222-2222-2222-222222222222', 'One Piece', 'Vua hải tặc', 'https://example.com/op.jpg'),
+('d0000000-0000-0000-0000-000000000002', '22222222-2222-2222-2222-222222222222', 'Naruto', 'Hokage đệ thất', 'https://example.com/na.jpg');
+
+-- 7. Manga Authors
+INSERT INTO public.manga_authors (manga_id, author_id) VALUES 
+('d0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000001'),
+('d0000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000002');
+
+-- 8. Manga Tags
+INSERT INTO public.manga_tags (manga_id, tag_id) VALUES 
+('d0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000001'),
+('d0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000002'),
+('d0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000001');
+
+-- 9. Chapters
+INSERT INTO public.chapters (id, manga_id, uploader_id, group_id, chapter_number, title) VALUES 
+('e0000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000001', '22222222-2222-2222-2222-222222222222', 'a0000000-0000-0000-0000-000000000001', '1', 'Romance Dawn'),
+('e0000000-0000-0000-0000-000000000002', 'd0000000-0000-0000-0000-000000000001', '22222222-2222-2222-2222-222222222222', 'a0000000-0000-0000-0000-000000000001', '2', 'Luffy vs Alvida');
+
+-- 10. Chapter Pages
+INSERT INTO public.chapter_pages (chapter_id, page_number, image_file_name) VALUES 
+('e0000000-0000-0000-0000-000000000001', 1, 'page_1.jpg'),
+('e0000000-0000-0000-0000-000000000001', 2, 'page_2.jpg');
+
+-- 11. Reading History
+INSERT INTO public.reading_history (user_id, manga_id, last_chapter_id, last_page) VALUES 
+('33333333-3333-3333-3333-333333333333', 'd0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001', 2);
+
+-- 12. Bookmarks
+INSERT INTO public.bookmarks (user_id, manga_id, folder_type) VALUES 
+('33333333-3333-3333-3333-333333333333', 'd0000000-0000-0000-0000-000000000001', 'reading');
+
+-- 13. Manga Ratings
+INSERT INTO public.manga_ratings (user_id, manga_id, rating_star) VALUES 
+('33333333-3333-3333-3333-333333333333', 'd0000000-0000-0000-0000-000000000001', 5);
+
+-- 14. Comments
+INSERT INTO public.comments (id, user_id, manga_id, content) VALUES 
+('f0000000-0000-0000-0000-000000000001', '33333333-3333-3333-3333-333333333333', 'd0000000-0000-0000-0000-000000000001', 'Truyện hay quá!');
+
+-- 15. Home Showcases
+INSERT INTO public.home_showcases (manga_id, display_section, created_by) VALUES 
+('d0000000-0000-0000-0000-000000000001', 'trending', '11111111-1111-1111-1111-111111111111');
