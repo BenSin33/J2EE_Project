@@ -1,3 +1,4 @@
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 import Link from 'next/link';
 import { SearchBar } from './SearchBar';
 import { ThemeToggle } from './ThemeToggle';
@@ -16,6 +17,9 @@ export function Navbar() {
             <SearchBar />
           </div>
           <div className="flex items-center gap-2">
+            <Link href="/library" className="px-2 text-sm text-violet-300">Tủ sách</Link>
+            <Link href="/history" className="px-2 text-sm text-violet-300">Lịch sử</Link>
+            <NotificationBell />
             <ThemeToggle />
           </div>
         </div>
