@@ -23,7 +23,7 @@ export function ChapterList({ chapters }: { chapters: Chapter[] }) {
               </div>
               <div className="flex items-center text-sm text-gray-500">
                 <Clock className="w-4 h-4 mr-1.5" />
-                {new Date(chapter.publishAt).toLocaleDateString()}
+                {(chapter.publishAt || chapter.createdAt) ? new Date(chapter.publishAt || chapter.createdAt).toLocaleDateString() : 'Mới cập nhật'}
               </div>
             </Link>
           ))

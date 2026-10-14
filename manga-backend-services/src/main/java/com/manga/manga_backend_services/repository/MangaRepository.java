@@ -6,9 +6,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public interface MangaRepository extends JpaRepository<Manga, UUID> {
     Page<Manga> findByTitleContainingIgnoreCase(String keyword, Pageable pageable);
+    Optional<Manga> findByMangadexId(UUID mangadexId);
+    long countByApprovalStatus(String approvalStatus);
 }

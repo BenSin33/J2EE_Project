@@ -10,4 +10,5 @@ public class RelationshipDto {
     private UUID id;
     private String type;
     private String related;
+    private Object attributes;
 }

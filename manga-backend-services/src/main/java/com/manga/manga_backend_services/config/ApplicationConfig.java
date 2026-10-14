@@ -1,5 +1,6 @@
 package com.manga.manga_backend_services.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.manga.manga_backend_services.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -41,4 +42,12 @@ public class ApplicationConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
+
+    @Bean
+    public ObjectMapper objectMapper() {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.findAndRegisterModules();
+        return mapper;
+    }
 }
+

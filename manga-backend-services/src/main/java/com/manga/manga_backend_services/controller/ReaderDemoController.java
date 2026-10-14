@@ -11,6 +11,9 @@ import java.time.OffsetDateTime;
 import jakarta.servlet.http.HttpSession;
 import java.util.stream.IntStream;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.manga.manga_backend_services.service.MangaDexService;
+
 /** Temporary fixture for member 2 to review. Disabled unless explicitly enabled. */
 @RestController
 @ConditionalOnProperty(name = "reader.demo.enabled", havingValue = "true")
@@ -23,6 +26,17 @@ public class ReaderDemoController {
     public record ProgressRequest(UUID chapterId, int lastPage) {}
     public record Progress(UUID mangaId, UUID chapterId, int lastPage, int totalPages,
                            double percentage, OffsetDateTime readAt) {}
+
+    private final MangaDexService mangaDexService;
+
+    public ReaderDemoController() {
+        this.mangaDexService = null;
+    }
+
+    @Autowired(required = false)
+    public ReaderDemoController(MangaDexService mangaDexService) {
+        this.mangaDexService = mangaDexService;
+    }
 
     // Demo-only session storage; production must use authenticated user + reading_history.
     @GetMapping("/reader-demo/progress/{mangaId}")
@@ -45,15 +59,18 @@ public class ReaderDemoController {
 
     @GetMapping("/chapters/{chapterId}/pages")
     public ReaderChapterResponse pages(@PathVariable UUID chapterId) {
-        if (!CHAPTER_ID.equals(chapterId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Chapter not available");
+        if (CHAPTER_ID.equals(chapterId)) {
+            var pages = IntStream.rangeClosed(1, 3)
+                    .mapToObj(n -> new ReaderChapterResponse.Page(n,
+                            "/api/v1/reader-demo/images/" + n, 800, 1100))
+                    .toList();
+            return new ReaderChapterResponse(MANGA_ID, CHAPTER_ID,
+                    "Reader integration demo", "1", "LOCAL", pages.size(), pages);
         }
-        var pages = IntStream.rangeClosed(1, 3)
-                .mapToObj(n -> new ReaderChapterResponse.Page(n,
-                        "/api/v1/reader-demo/images/" + n, 800, 1100))
-                .toList();
-        return new ReaderChapterResponse(MANGA_ID, CHAPTER_ID,
-                "Reader integration demo", "1", "LOCAL", pages.size(), pages);
+        if (mangaDexService != null) {
+            return mangaDexService.getChapterPages(chapterId);
+        }
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Chapter not available");
     }
 
     @GetMapping(value = "/reader-demo/images/{page}", produces = "image/svg+xml")

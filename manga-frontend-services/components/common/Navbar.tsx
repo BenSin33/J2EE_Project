@@ -17,6 +17,7 @@ export function Navbar() {
             <SearchBar />
           </div>
           <div className="flex items-center gap-2">
+            <Link href="/admin" className="px-2 text-sm text-purple-400 font-medium hover:text-purple-300">Quản trị Admin</Link>
             <Link href="/library" className="px-2 text-sm text-violet-300">Tủ sách</Link>
             <Link href="/history" className="px-2 text-sm text-violet-300">Lịch sử</Link>
             <NotificationBell />

@@ -24,8 +24,15 @@ public class ReadingProgressService {
         if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken)
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         UUID id;
-        try { id = UUID.fromString(auth.getName()); }
-        catch (IllegalArgumentException e) { throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Principal must contain internal user UUID"); }
+        if (auth.getPrincipal() instanceof com.manga.manga_backend_services.entity.User user) {
+            id = user.getId();
+        } else {
+            try {
+                id = UUID.fromString(auth.getName());
+            } catch (IllegalArgumentException e) {
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Principal must contain internal user UUID");
+            }
+        }
         var users = db.queryForList("select is_banned from users where id=:id", Map.of("id", id));
         if (users.isEmpty()) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         if (Boolean.TRUE.equals(users.getFirst().get("is_banned"))) throw new ResponseStatusException(HttpStatus.FORBIDDEN);

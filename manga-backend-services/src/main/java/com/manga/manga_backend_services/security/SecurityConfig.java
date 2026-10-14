@@ -25,13 +25,24 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers(
                         "/api/auth/**",
                         "/v3/api-docs/**",
                         "/swagger-ui/**",
                         "/swagger-ui.html",
-                        "/error"
+                        "/error",
+                        "/api/v1/reader-demo/**"
                 ).permitAll()
+                .requestMatchers("/api/v1/admin/**", "/api/v1/crawler/**").hasAnyAuthority("ROLE_ADMIN", "ADMIN")
+                .requestMatchers(org.springframework.http.HttpMethod.GET,
+                        "/api/v1/mangas/**",
+                        "/api/v1/manga/**",
+                        "/api/v1/chapters/**",
+                        "/api/v1/mangas/*/comments",
+                        "/api/v1/mangas/*/rating"
+                ).permitAll()
+                .requestMatchers("/api/v1/me/**").authenticated()
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session
