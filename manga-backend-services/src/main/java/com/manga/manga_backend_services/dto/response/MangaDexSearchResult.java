@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -20,4 +21,8 @@ public class MangaDexSearchResult {
     private String originalLanguage;
     private String contentRating;
     private String authorName;
+    private List<String> tags;
+    private List<String> availableLanguages;
+    /** UUID truyện trong hệ thống nếu bộ này đã được cào trước đó, null nếu chưa */
+    private UUID importedMangaId;
 }
