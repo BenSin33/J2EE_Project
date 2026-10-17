@@ -18,5 +18,13 @@ public class MangaDexImportRequest {
     private String language = "vi";
 
     @Builder.Default
-    private int maxChapters = 50;
+    private Integer maxChapters = 50;
+
+    /** Upload ảnh bìa lên Cloudinary (chỉ có tác dụng khi đã cấu hình Cloudinary) */
+    @Builder.Default
+    private Boolean uploadCover = true;
+
+    /** Số chương đầu tiên sẽ được tải trang ảnh và upload lên Cloudinary ngay khi cào (0 = không) */
+    @Builder.Default
+    private Integer mirrorChapters = 0;
 }
