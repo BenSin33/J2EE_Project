@@ -4,14 +4,23 @@ import com.manga.manga_backend_services.entity.Manga;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface MangaRepository extends JpaRepository<Manga, UUID> {
+public interface MangaRepository extends JpaRepository<Manga, UUID>, JpaSpecificationExecutor<Manga> {
+
     Page<Manga> findByTitleContainingIgnoreCase(String keyword, Pageable pageable);
+
     Optional<Manga> findByMangadexId(UUID mangadexId);
+
     long countByApprovalStatus(String approvalStatus);
-}
+
+    List<Manga> findAllByOrderByUpdatedAtDesc();
+
+    List<Manga> findTop10ByOrderByViewsCountDesc();
+}

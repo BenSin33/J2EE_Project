@@ -1,68 +1,64 @@
 package com.manga.manga_backend_services.controller;
 
-import com.manga.manga_backend_services.entity.Manga;
-import com.manga.manga_backend_services.repository.MangaRepository;
+import com.manga.manga_backend_services.dto.response.ChapterResponse;
+import com.manga.manga_backend_services.dto.response.MangaResponse;
+import com.manga.manga_backend_services.service.MangaDexService;
+import com.manga.manga_backend_services.service.MangaService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.UUID;
-
-import com.manga.manga_backend_services.dto.response.ChapterResponse;
-import com.manga.manga_backend_services.service.MangaDexService;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping({"/api/v1/mangas", "/api/v1/manga"})
-@CrossOrigin(origins = "http://localhost:3000") // Mở sẵn cho Next.js gọi
+@CrossOrigin(origins = "http://localhost:3000")
+@RequiredArgsConstructor
+@Tag(name = "Manga", description = "APIs quản lý và truy vấn truyện Manga")
 public class MangaController {
 
-    private final MangaRepository mangaRepository;
+    private final MangaService mangaService;
     private final MangaDexService mangaDexService;
 
-    public MangaController(MangaRepository mangaRepository, MangaDexService mangaDexService) {
-        this.mangaRepository = mangaRepository;
-        this.mangaDexService = mangaDexService;
+    @Operation(summary = "Lấy danh sách truyện mới cập nhật")
+    @GetMapping("/recent-updates")
+    public ResponseEntity<List<MangaResponse>> getRecentUpdates() {
+        return ResponseEntity.ok(mangaService.getRecentUpdates());
     }
 
-    /**
-     * API Giai đoạn 1 - Thành viên 4:
-     * Lấy danh sách truyện có hỗ trợ Phân trang (Pagination) và Tìm kiếm cơ bản bằng chữ (Search by keyword).
-     *
-     * @param keyword Từ khóa tìm kiếm theo tên truyện (không bắt buộc)
-     * @param page Số trang (bắt đầu từ 0, mặc định: 0)
-     * @param limit Số lượng truyện trên mỗi trang (mặc định: 20)
-     */
+    @Operation(summary = "Lấy top 10 truyện thịnh hành nhất")
+    @GetMapping("/top-trending")
+    public ResponseEntity<List<MangaResponse>> getTopTrending() {
+        return ResponseEntity.ok(mangaService.getTopTrending());
+    }
+
+    @Operation(summary = "Lấy danh sách truyện có phân trang và tìm kiếm theo tên")
     @GetMapping
-    public ResponseEntity<Page<Manga>> getMangas(
+    public ResponseEntity<Page<MangaResponse>> getMangas(
             @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int limit
     ) {
-        Pageable pageable = PageRequest.of(Math.max(0, page), Math.max(1, limit), Sort.by(Sort.Direction.DESC, "createdAt"));
-
-        Page<Manga> result;
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            result = mangaRepository.findByTitleContainingIgnoreCase(keyword.trim(), pageable);
-        } else {
-            result = mangaRepository.findAll(pageable);
-        }
-
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(mangaService.getMangas(keyword, page, limit));
     }
 
+    @Operation(summary = "Lấy chi tiết truyện theo ID")
     @GetMapping("/{id}")
-    public ResponseEntity<Manga> getMangaById(@PathVariable UUID id) {
-        return mangaRepository.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<MangaResponse> getMangaById(@PathVariable UUID id) {
+        MangaResponse response = mangaService.getMangaById(id);
+        if (response == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Lấy danh sách chương của truyện")
     @GetMapping("/{id}/chapters")
     public ResponseEntity<List<ChapterResponse>> getChaptersByMangaId(@PathVariable UUID id) {
         return ResponseEntity.ok(mangaDexService.getChaptersByMangaId(id));
     }
-}
+}

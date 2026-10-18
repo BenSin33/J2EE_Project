@@ -137,3 +137,16 @@ export async function markNotificationRead(id: string): Promise<null> {
 export async function markAllNotificationsRead(): Promise<null> {
  return readerAccountRequest('notifications/read-all', { method: 'PATCH' });
 }
+
+export async function fetchRecentUpdates() {
+  const res = await fetch(`${API_BASE_URL}/mangas/recent-updates`, { cache: 'no-store' });
+  if (!res.ok) throw new Error('Failed to fetch recent updates');
+  return res.json();
+}
+
+export async function fetchTopTrending() {
+  const res = await fetch(`${API_BASE_URL}/mangas/top-trending`, { cache: 'no-store' });
+  if (!res.ok) throw new Error('Failed to fetch top trending');
+  return res.json();
+}
+
