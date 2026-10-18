@@ -82,7 +82,7 @@ export default function AdminOverviewPage() {
 
   const handleResolveReport = async (reportId: string) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/admin/reports/${reportId}/status`, {
+      const res = await adminFetch(`/admin/reports/${reportId}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'resolved' }),

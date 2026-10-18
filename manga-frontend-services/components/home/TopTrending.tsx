@@ -1,6 +1,20 @@
-import { useRef, useState } from 'react'
+'use client'
+import { useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
+import { fetchTopTrending } from '@/lib/api'
 
-const TRENDING = [
+interface TrendingItem {
+  id?: string
+  rank: number
+  title: string
+  cover: string
+  genre: string
+  bookmarks: string
+  rating: number | string
+  badge?: string | null
+}
+
+const MOCK_TRENDING: TrendingItem[] = [
   {
     rank: 1,
     title: 'Solo Leveling',
@@ -105,10 +119,53 @@ const BADGE_STYLES: Record<string, { bg: string; color: string }> = {
   RISING: { bg: '#f59e0b18', color: '#fbbf24' },
 }
 
+function formatViews(views?: number): string {
+  if (!views) return '0'
+  if (views >= 1000000) return `${(views / 1000000).toFixed(1)}M`
+  if (views >= 1000) return `${(views / 1000).toFixed(1)}K`
+  return views.toString()
+}
+
 export default function TopTrending() {
   const trackRef = useRef<HTMLDivElement>(null)
   const [canLeft, setCanLeft] = useState(false)
   const [canRight, setCanRight] = useState(true)
+  const [trending, setTrending] = useState<TrendingItem[]>(MOCK_TRENDING)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    let isMounted = true
+    fetchTopTrending()
+      .then((data: any[]) => {
+        if (isMounted && Array.isArray(data) && data.length > 0) {
+          const mapped: TrendingItem[] = data.map((item, index) => {
+            const origin = item.originType ? item.originType.toUpperCase() : 'MANGA'
+            const status = item.status ? item.status.toUpperCase() : 'ONGOING'
+            return {
+              id: item.id,
+              rank: index + 1,
+              title: item.title,
+              cover: item.coverImageUrl || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=220&h=310&fit=crop&auto=format',
+              genre: `${origin} · ${status}`,
+              bookmarks: formatViews(item.bookmarksCount || item.viewsCount || 0),
+              rating: Number(item.ratingScore) > 0 ? Number(item.ratingScore).toFixed(1) : 4.9,
+              badge: index === 0 ? 'HOT' : (index === 1 ? 'NEW' : (index === 2 ? 'RISING' : null)),
+            }
+          })
+          setTrending(mapped)
+        }
+      })
+      .catch((err) => {
+        console.warn('Backend /top-trending API call failed:', err)
+      })
+      .finally(() => {
+        if (isMounted) setIsLoading(false)
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const scroll = (dir: 'left' | 'right') => {
     if (!trackRef.current) return
@@ -133,13 +190,17 @@ export default function TopTrending() {
           <span className="text-sm" style={{ color: '#606070', fontFamily: 'Inter,sans-serif' }}>
             This week
           </span>
+          {isLoading && (
+            <span className="text-xs px-2 py-0.5 rounded animate-pulse" style={{ background: 'rgba(139,92,246,0.15)', color: '#a78bfa' }}>
+              Loading...
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
           <a href="#" className="text-sm font-medium mr-2" style={{ color: '#8b5cf6', fontFamily: 'Inter,sans-serif' }}>
             Full chart →
           </a>
-          {/* Scroll controls */}
           {[{ dir: 'left', can: canLeft }, { dir: 'right', can: canRight }].map(({ dir, can }) => (
             <button
               key={dir}
@@ -165,88 +226,94 @@ export default function TopTrending() {
       </div>
 
       <div ref={trackRef} className="scroll-x flex gap-4 pb-2">
-        {TRENDING.map(item => (
-          <div
-            key={item.rank}
-            className="manga-card shrink-0 cursor-pointer group"
-            style={{ width: '180px' }}
-          >
-            {/* Cover art */}
-            <div className="relative rounded-xl overflow-hidden mb-3" style={{ height: '250px', background: '#26262e' }}>
-              <img
-                src={item.cover}
-                alt={item.title}
-                className="w-full h-full object-cover transition-transform duration-400 group-hover:scale-105"
-              />
+        {trending.map(item => {
+          const cardContent = (
+            <div
+              className="manga-card shrink-0 cursor-pointer group"
+              style={{ width: '180px' }}
+            >
+              <div className="relative rounded-xl overflow-hidden mb-3" style={{ height: '250px', background: '#26262e' }}>
+                <img
+                  src={item.cover}
+                  alt={item.title}
+                  className="w-full h-full object-cover transition-transform duration-400 group-hover:scale-105"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=220&h=310&fit=crop&auto=format';
+                  }}
+                />
 
-              {/* Gradient overlay */}
-              <div
-                className="absolute inset-0"
-                style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 55%)' }}
-              />
-
-              {/* Rank badge */}
-              <div
-                className="absolute top-2 left-2 w-8 h-8 rounded-lg flex items-center justify-center font-black text-base"
-                style={{
-                  background: RANK_COLORS[item.rank] ? `${RANK_COLORS[item.rank]}22` : 'rgba(18,18,20,0.9)',
-                  border: `1.5px solid ${RANK_COLORS[item.rank] ?? 'rgba(255,255,255,0.12)'}`,
-                  color: RANK_COLORS[item.rank] ?? '#a0a0b0',
-                  fontFamily: 'Outfit,sans-serif',
-                  backdropFilter: 'blur(6px)',
-                }}
-              >
-                {item.rank}
-              </div>
-
-              {/* Status badge */}
-              {item.badge && (
                 <div
-                  className="absolute top-2 right-2 text-[10px] px-1.5 py-0.5 rounded-md font-bold"
-                  style={{ ...BADGE_STYLES[item.badge], fontFamily: 'Outfit,sans-serif', letterSpacing: '0.05em' }}
-                >
-                  {item.badge}
-                </div>
-              )}
+                  className="absolute inset-0"
+                  style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 55%)' }}
+                />
 
-              {/* Bottom info */}
-              <div className="absolute bottom-0 left-0 right-0 p-2.5">
-                <div className="flex items-center gap-1 mb-1">
-                  <svg width="11" height="11" viewBox="0 0 11 11" fill="#f59e0b">
-                    <polygon points="5.5,1 7,4 10,4.2 7.8,6.5 8.6,10 5.5,8.2 2.4,10 3.2,6.5 1,4.2 4,4" />
-                  </svg>
-                  <span className="text-xs font-semibold" style={{ color: '#f59e0b', fontFamily: 'JetBrains Mono,monospace' }}>
-                    {item.rating}
-                  </span>
+                <div
+                  className="absolute top-2 left-2 w-8 h-8 rounded-lg flex items-center justify-center font-black text-base"
+                  style={{
+                    background: RANK_COLORS[item.rank] ? `${RANK_COLORS[item.rank]}22` : 'rgba(18,18,20,0.9)',
+                    border: `1.5px solid ${RANK_COLORS[item.rank] ?? 'rgba(255,255,255,0.12)'}`,
+                    color: RANK_COLORS[item.rank] ?? '#a0a0b0',
+                    fontFamily: 'Outfit,sans-serif',
+                    backdropFilter: 'blur(6px)',
+                  }}
+                >
+                  {item.rank}
+                </div>
+
+                {item.badge && (
+                  <div
+                    className="absolute top-2 right-2 text-[10px] px-1.5 py-0.5 rounded-md font-bold"
+                    style={{ ...BADGE_STYLES[item.badge], fontFamily: 'Outfit,sans-serif', letterSpacing: '0.05em' }}
+                  >
+                    {item.badge}
+                  </div>
+                )}
+
+                <div className="absolute bottom-0 left-0 right-0 p-2.5">
+                  <div className="flex items-center gap-1 mb-1">
+                    <svg width="11" height="11" viewBox="0 0 11 11" fill="#f59e0b">
+                      <polygon points="5.5,1 7,4 10,4.2 7.8,6.5 8.6,10 5.5,8.2 2.4,10 3.2,6.5 1,4.2 4,4" />
+                    </svg>
+                    <span className="text-xs font-semibold" style={{ color: '#f59e0b', fontFamily: 'JetBrains Mono,monospace' }}>
+                      {item.rating}
+                    </span>
+                  </div>
                 </div>
               </div>
+
+              <p
+                className="font-bold text-sm line-clamp-1 mb-1 group-hover:text-purple-400 transition-colors"
+                style={{ color: '#f0f0f4', fontFamily: 'Outfit,sans-serif' }}
+              >
+                {item.title}
+              </p>
+
+              <p
+                className="text-xs mb-2 line-clamp-1"
+                style={{ color: '#606070', fontFamily: 'Inter,sans-serif' }}
+              >
+                {item.genre}
+              </p>
+
+              <div className="flex items-center gap-1">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ color: '#8b5cf6' }}>
+                  <path d="M2 2h8a1 1 0 0 1 1 1v7.5L7.5 9 3 10.5V3a1 1 0 0 1 1-1z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+                </svg>
+                <span className="text-xs font-semibold" style={{ color: '#8b5cf6', fontFamily: 'JetBrains Mono,monospace' }}>
+                  {item.bookmarks}
+                </span>
+              </div>
             </div>
+          )
 
-            {/* Metadata */}
-            <p
-              className="font-bold text-sm line-clamp-1 mb-1 group-hover:text-purple-400 transition-colors"
-              style={{ color: '#f0f0f4', fontFamily: 'Outfit,sans-serif' }}
-            >
-              {item.title}
-            </p>
-
-            <p
-              className="text-xs mb-2 line-clamp-1"
-              style={{ color: '#606070', fontFamily: 'Inter,sans-serif' }}
-            >
-              {item.genre}
-            </p>
-
-            <div className="flex items-center gap-1">
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ color: '#8b5cf6' }}>
-                <path d="M2 2h8a1 1 0 0 1 1 1v7.5L7.5 9 3 10.5V3a1 1 0 0 1 1-1z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
-              </svg>
-              <span className="text-xs font-semibold" style={{ color: '#8b5cf6', fontFamily: 'JetBrains Mono,monospace' }}>
-                {item.bookmarks}
-              </span>
-            </div>
-          </div>
-        ))}
+          return item.id ? (
+            <Link key={item.id} href={`/manga/${item.id}`} className="block">
+              {cardContent}
+            </Link>
+          ) : (
+            <div key={item.rank}>{cardContent}</div>
+          )
+        })}
       </div>
     </section>
   )
