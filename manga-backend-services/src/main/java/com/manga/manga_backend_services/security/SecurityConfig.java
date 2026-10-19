@@ -60,7 +60,7 @@ public class SecurityConfig {
         // Cho phép frontend ở localhost:3000
         configuration.setAllowedOrigins(java.util.List.of("http://localhost:3000"));
         // Cho phép các method cần thiết
-        configuration.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         // Cho phép tất cả các header (bao gồm Authorization)
         configuration.setAllowedHeaders(java.util.List.of("*"));
         // Cho phép gửi credentials nếu cần

@@ -20,11 +20,20 @@ class ReadingProgressServiceTests {
         verifyNoInteractions(db);
     }
     @Test void bannedUserIsRejectedAndActiveUserResolvesFromPrincipal() {
-        var auth = new UsernamePasswordAuthenticationToken(user.toString(), "", List.of());
+        var principal = com.manga.manga_backend_services.entity.User.builder().id(user).username("reader").build();
+        var auth = new UsernamePasswordAuthenticationToken(principal, "", List.of());
         when(db.queryForList(anyString(), anyMap())).thenReturn(List.of(Map.of("is_banned", true)));
         assertEquals(403, assertThrows(ResponseStatusException.class, () -> service.currentUser(auth)).getStatusCode().value());
         when(db.queryForList(anyString(), anyMap())).thenReturn(List.of(Map.of("is_banned", false)));
         assertEquals(user, service.currentUser(auth));
+    }
+    @Test void uuidStringAndUnsavedUserCannotImpersonateAuthenticatedUser() {
+        var uuidPrincipal = new UsernamePasswordAuthenticationToken(user.toString(), "", List.of());
+        var unsaved = new UsernamePasswordAuthenticationToken(
+            com.manga.manga_backend_services.entity.User.builder().username("reader").build(), "", List.of());
+        assertEquals(401, assertThrows(ResponseStatusException.class, () -> service.currentUser(uuidPrincipal)).getStatusCode().value());
+        assertEquals(401, assertThrows(ResponseStatusException.class, () -> service.currentUser(unsaved)).getStatusCode().value());
+        verifyNoInteractions(db);
     }
     @Test void chapterFromAnotherMangaAndHiddenChapterDoNotWrite() {
         when(db.queryForList(anyString(), anyMap())).thenReturn(List.of(Map.of("manga_id", UUID.randomUUID(), "status", "published", "approval_status", "approved")));
