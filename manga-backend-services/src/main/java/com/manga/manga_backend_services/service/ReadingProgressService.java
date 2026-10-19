@@ -19,20 +19,14 @@ public class ReadingProgressService {
             String coverImageUrl, boolean available) {}
     public record History(List<Progress> items, int page, int size, long totalElements) {}
 
-    // Integration contract: authenticated principal name is the internal users.id UUID.
+    // JWT filter validates the token and loads the persisted User principal.
     public UUID currentUser(Authentication auth) {
         if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken)
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
-        UUID id;
-        if (auth.getPrincipal() instanceof com.manga.manga_backend_services.entity.User user) {
-            id = user.getId();
-        } else {
-            try {
-                id = UUID.fromString(auth.getName());
-            } catch (IllegalArgumentException e) {
-                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Principal must contain internal user UUID");
-            }
-        }
+        if (!(auth.getPrincipal() instanceof com.manga.manga_backend_services.entity.User user)
+                || user.getId() == null)
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authenticated user is required");
+        UUID id = user.getId();
         var users = db.queryForList("select is_banned from users where id=:id", Map.of("id", id));
         if (users.isEmpty()) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         if (Boolean.TRUE.equals(users.getFirst().get("is_banned"))) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
