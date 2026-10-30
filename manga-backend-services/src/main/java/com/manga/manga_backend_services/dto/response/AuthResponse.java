@@ -18,4 +18,7 @@ public class AuthResponse {
     private String email;
     private String role;
     private String avatarUrl;
+    private Long coins;
+    private Boolean isVip;
+    private String authProvider;
 }

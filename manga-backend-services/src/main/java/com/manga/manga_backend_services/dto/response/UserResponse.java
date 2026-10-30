@@ -22,6 +22,9 @@ public class UserResponse {
     private String role;
     private Boolean isBanned;
     private Boolean isMuted;
+    private Long coins;
+    private Boolean isVip;
+    private String authProvider;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
 }
