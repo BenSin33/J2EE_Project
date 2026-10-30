@@ -7,6 +7,9 @@ interface User {
   email: string
   role: string
   avatarUrl?: string
+  coins?: number
+  isVip?: boolean
+  authProvider?: string
 }
 
 interface AuthState {

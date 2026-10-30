@@ -54,6 +54,24 @@ public class User implements UserDetails {
     @Column(name = "mute_reason")
     private String muteReason;
 
+    @Column(name = "coins")
+    @Builder.Default
+    private Long coins = 0L;
+
+    @Column(name = "is_vip")
+    @Builder.Default
+    private Boolean isVip = false;
+
+    @Column(name = "vip_until")
+    private OffsetDateTime vipUntil;
+
+    @Column(name = "auth_provider", length = 50)
+    @Builder.Default
+    private String authProvider = "LOCAL";
+
+    @Column(name = "provider_id", length = 100)
+    private String providerId;
+
     @Column(name = "created_at", updatable = false)
     private OffsetDateTime createdAt;
 

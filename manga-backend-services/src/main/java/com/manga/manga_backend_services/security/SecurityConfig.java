@@ -32,7 +32,9 @@ public class SecurityConfig {
                         "/swagger-ui/**",
                         "/swagger-ui.html",
                         "/error",
-                        "/api/v1/reader-demo/**"
+                        "/api/v1/reader-demo/**",
+                        "/api/v1/payment/packages",
+                        "/api/v1/payment/vnpay-callback"
                 ).permitAll()
                 .requestMatchers("/api/v1/admin/**", "/api/v1/crawler/**").hasAnyAuthority("ROLE_ADMIN", "ADMIN")
                 .requestMatchers(org.springframework.http.HttpMethod.GET,
