@@ -12,9 +12,27 @@ export function DemoProgressReader({ chapter, demo = true }: { chapter: ReaderCh
   const [status, setStatus] = useState('Đang tải vị trí đã lưu…');
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [saveAttempt, setSaveAttempt] = useState(0);
+  const [autoScroll, setAutoScroll] = useState(false);
   const latest = useRef(1);
   const queue = useRef<Promise<unknown>>(Promise.resolve());
   const active = useRef(true);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.search.includes('autoplay')) {
+      setAutoScroll(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!autoScroll) return;
+    const interval = setInterval(() => {
+      window.scrollBy({ top: 400, behavior: 'smooth' });
+      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 100) {
+        setAutoScroll(false);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [autoScroll]);
   useEffect(() => {
     active.current = true;
     const controller = new AbortController();
@@ -27,9 +45,13 @@ export function DemoProgressReader({ chapter, demo = true }: { chapter: ReaderCh
       setStatus(progress ? 'Đã khôi phục vị trí.' : 'Chưa có vị trí đã lưu.');
     }).catch(err => {
       if (controller.signal.aborted) return;
+      setCanSave(false);
+      setInitial(1);
       if (err instanceof ReaderApiError && (err.status === 401 || err.status === 403)) {
-        setCanSave(false); setInitial(1); setStatus(err.message);
-      } else setStatus('Không tải được tiến độ. Bấm thử lại.');
+        setStatus(err.message);
+      } else {
+        setStatus('Chế độ đọc trực tiếp (chưa đồng bộ tiến độ).');
+      }
     });
     return () => { active.current = false; controller.abort(); };
   }, [chapter, loadAttempt, demo]);
@@ -53,7 +75,13 @@ export function DemoProgressReader({ chapter, demo = true }: { chapter: ReaderCh
     <div className="mx-auto max-w-4xl px-4 py-2 text-sm" aria-live="polite">
       <p>{demo ? 'Tiến độ demo theo phiên trình duyệt — chưa lưu vào tài khoản.' : 'Tiến độ đọc của tài khoản'}</p>
       <p>Trang {current}/{chapter.totalPages} · {(current / chapter.totalPages * 100).toFixed(1)}% · {status}</p>
-      <button className="mt-2 rounded bg-gray-700 px-3 py-1" onClick={() => !canSave || initial === null ? setLoadAttempt(n => n + 1) : setSaveAttempt(n => n + 1)}>Thử lại tiến độ</button>
+      <button className="mt-2 rounded bg-gray-700 px-3 py-1 hover:bg-gray-600 transition" onClick={() => !canSave || initial === null ? setLoadAttempt(n => n + 1) : setSaveAttempt(n => n + 1)}>Thử lại tiến độ</button>
+      <button 
+        className={`mt-2 ml-2 rounded px-3 py-1 font-medium transition ${autoScroll ? 'bg-amber-600 hover:bg-amber-700 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white'}`}
+        onClick={() => setAutoScroll(prev => !prev)}
+      >
+        {autoScroll ? '⏸ Tạm dừng tự động cuộn' : '▶ Tự động cuộn đọc test'}
+      </button>
     </div>
     {initial !== null && <ReaderCanvas pages={chapter.pages} initialPage={initial} onPageChange={onPageChange} />}
   </>;

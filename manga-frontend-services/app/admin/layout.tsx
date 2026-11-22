@@ -110,11 +110,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     );
   }
 
-  // 3. Kiểm tra vai trò quyền hạn (Role Check)
+  // 3. Kiểm tra vai trò quyền hạn (Role Check: Hỗ trợ ROLE_ADMIN và ROLE_MODERATOR)
   const userRole = (user.role || '').toUpperCase();
   const isAdmin = userRole === 'ROLE_ADMIN' || userRole === 'ADMIN';
+  const isModerator = userRole === 'ROLE_MODERATOR' || userRole === 'MODERATOR';
+  const canAccessAdminPortal = isAdmin || isModerator;
 
-  if (!isAdmin) {
+  if (!canAccessAdminPortal) {
     return (
       <div className="min-h-screen bg-[#0d0d12] text-gray-100 flex flex-col items-center justify-center p-6 font-sans">
         <div className="max-w-md w-full bg-[#16161f] border border-amber-500/30 rounded-2xl p-8 shadow-2xl text-center space-y-6">
@@ -187,7 +189,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             <div className="text-left">
               <p className="font-semibold text-gray-200 leading-none">{user.username}</p>
               <p className="text-[10px] text-emerald-400 flex items-center gap-1 mt-0.5">
-                <ShieldCheck className="w-3 h-3" /> ROLE_ADMIN
+                <ShieldCheck className="w-3 h-3" /> {isAdmin ? 'ROLE_ADMIN' : 'ROLE_MODERATOR'}
               </p>
             </div>
           </div>

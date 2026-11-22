@@ -73,6 +73,21 @@ public class ReaderDemoController {
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Chapter not available");
     }
 
+    @GetMapping("/chapters/{chapterId}/pages/{pageNumber}/image")
+    public org.springframework.http.ResponseEntity<byte[]> chapterPageImage(
+            @PathVariable UUID chapterId,
+            @PathVariable int pageNumber
+    ) {
+        if (mangaDexService == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Service not available");
+        }
+        MangaDexService.PageImageData img = mangaDexService.getChapterPageImage(chapterId, pageNumber);
+        return org.springframework.http.ResponseEntity.ok()
+                .contentType(img.contentType())
+                .header(org.springframework.http.HttpHeaders.CACHE_CONTROL, "public, max-age=604800, immutable")
+                .body(img.bytes());
+    }
+
     @GetMapping(value = "/reader-demo/images/{page}", produces = "image/svg+xml")
     public String image(@PathVariable int page) {
         if (page < 1 || page > 3) {

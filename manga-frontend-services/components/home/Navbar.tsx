@@ -1,5 +1,7 @@
 import { NotificationBell } from '@/components/notifications/NotificationBell'
+import { useAuthStore } from '@/store/authStore'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 const genres = ['Action', 'Romance', 'Fantasy', 'Isekai', 'Shounen', 'Horror', 'Slice of Life', 'Mecha']
@@ -15,6 +17,8 @@ export default function Navbar({ darkMode, onToggleDark }: NavbarProps) {
   const [filterType, setFilterType] = useState<'Genre' | 'Status'>('Genre')
   const [query, setQuery] = useState('')
   const [profileOpen, setProfileOpen] = useState(false)
+  const { user, isAuthenticated, logout } = useAuthStore()
+  const router = useRouter()
 
   return (
     <nav
@@ -125,15 +129,16 @@ export default function Navbar({ darkMode, onToggleDark }: NavbarProps) {
         {/* Nav links */}
         <div className="hidden lg:flex items-center gap-1">
           {[
-            { label: 'Browse', href: '/' },
+            { label: 'Khám phá', href: '/' },
             { label: 'Tủ sách', href: '/library' },
+            { label: 'Đăng truyện', href: '/uploader' },
             { label: 'Nạp Xu (VNPay)', href: '/payment' },
-            { label: 'Admin', href: '/admin' },
+            { label: 'Quản trị', href: '/admin' },
           ].map(link => (
             <Link
               key={link.label}
               href={link.href}
-              className="px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:text-white"
+              className="px-3.5 py-2 rounded-lg text-sm font-medium transition-colors hover:text-white"
               style={{ color: '#a0a0b0', fontFamily: 'Inter, sans-serif' }}
             >
               {link.label}
@@ -163,39 +168,78 @@ export default function Navbar({ darkMode, onToggleDark }: NavbarProps) {
 
           <NotificationBell />
 
-          {/* Avatar */}
-          <div className="relative">
-            <button onClick={() => setProfileOpen(o => !o)} className="relative">
-              <img
-                src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=64&h=64&fit=crop&auto=format"
-                alt="User avatar"
-                className="w-9 h-9 rounded-lg object-cover"
-                style={{ border: '2px solid rgba(139,92,246,0.5)' }}
-              />
-            </button>
-            {profileOpen && (
-              <div
-                className="absolute right-0 top-11 rounded-xl border p-2 z-50 w-48"
-                style={{ background: '#202026', borderColor: 'rgba(255,255,255,0.1)', boxShadow: '0 20px 40px rgba(0,0,0,0.6)' }}
-              >
-                <div className="px-3 py-2 mb-1">
-                  <p className="text-sm font-semibold" style={{ color: '#f0f0f4', fontFamily: 'Outfit,sans-serif' }}>Akira_Reader</p>
-                  <p className="text-xs" style={{ color: '#606070' }}>akira@example.com</p>
-                </div>
-                <div className="border-t mb-1" style={{ borderColor: 'rgba(255,255,255,0.07)' }} />
-                {[{ label: 'Tủ sách', href: '/library' }, { label: 'Lịch sử đọc', href: '/history' }, { label: 'Ví Xu & Nạp VNPay', href: '/payment' }, { label: 'Trang Admin', href: '/admin' }].map(item => <Link key={item.href} href={item.href} className="block rounded-lg px-3 py-2 text-sm text-gray-300 hover:text-white">{item.label}</Link>)}
-                {['Settings', 'Sign Out'].map(item => (
+          {/* User Profile / Login Button */}
+          {isAuthenticated && user ? (
+            <div className="relative">
+              <button onClick={() => setProfileOpen(o => !o)} className="relative flex items-center gap-2 cursor-pointer">
+                <img
+                  src={user.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.username)}`}
+                  alt="User avatar"
+                  className="w-9 h-9 rounded-lg object-cover bg-gray-800"
+                  style={{ border: '2px solid rgba(139,92,246,0.5)' }}
+                />
+              </button>
+              {profileOpen && (
+                <div
+                  className="absolute right-0 top-11 rounded-xl border p-2 z-50 w-56"
+                  style={{ background: '#202026', borderColor: 'rgba(255,255,255,0.1)', boxShadow: '0 20px 40px rgba(0,0,0,0.6)' }}
+                >
+                  <div className="px-3 py-2 mb-1">
+                    <div className="flex items-center justify-between gap-1">
+                      <p className="text-sm font-semibold truncate" style={{ color: '#f0f0f4', fontFamily: 'Outfit,sans-serif' }}>
+                        {user.username} {user.isVip ? '👑' : ''}
+                      </p>
+                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                        {user.role?.replace('ROLE_', '')}
+                      </span>
+                    </div>
+                    <p className="text-xs truncate" style={{ color: '#606070' }}>{user.email}</p>
+                    <p className="text-xs font-semibold text-amber-400 mt-1">
+                      Số dư: {(user.coins ?? 0).toLocaleString('vi-VN')} Xu
+                    </p>
+                  </div>
+                  <div className="border-t mb-1" style={{ borderColor: 'rgba(255,255,255,0.07)' }} />
+                  {[
+                    { label: 'Tủ sách (Bookmark)', href: '/library' },
+                    { label: 'Lịch sử đọc', href: '/history' },
+                    { label: 'Ví Xu & Nạp VNPay', href: '/payment' },
+                    { label: 'Uploader Dashboard', href: '/uploader' },
+                    { label: 'Quản trị Admin', href: '/admin' },
+                  ].map(item => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setProfileOpen(false)}
+                      className="block rounded-lg px-3 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition"
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                  <div className="border-t my-1" style={{ borderColor: 'rgba(255,255,255,0.07)' }} />
                   <button
-                    key={item}
-                    className="w-full text-left px-3 py-2 rounded-lg text-sm transition-colors hover:text-white"
-                    style={{ color: item === 'Sign Out' ? '#f87171' : '#a0a0b0', fontFamily: 'Inter,sans-serif' }}
+                    onClick={() => {
+                      logout()
+                      setProfileOpen(false)
+                      router.push('/login')
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-lg text-sm transition-colors hover:bg-rose-500/10 cursor-pointer"
+                    style={{ color: '#f87171', fontFamily: 'Inter,sans-serif' }}
                   >
-                    {item}
+                    Đăng xuất
                   </button>
-                ))}
-              </div>
-            )}
-          </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Link
+                href="/login"
+                className="px-3.5 py-2 rounded-lg text-xs font-semibold text-white bg-purple-600 hover:bg-purple-500 transition shadow-md shadow-purple-600/20"
+              >
+                Đăng nhập
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </nav>

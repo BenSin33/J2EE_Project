@@ -45,7 +45,7 @@ export default async function MangaDetailPage({ params }: { params: Promise<{ id
   const { id } = await params;
 
   let manga: Manga = { ...DEFAULT_MOCK_MANGA, id };
-  let chapters: Chapter[] = DEFAULT_MOCK_CHAPTERS;
+  let chapters: Chapter[] = id === 'demo' ? DEFAULT_MOCK_CHAPTERS : [];
 
   if (id && id !== 'demo') {
     try {
@@ -55,11 +55,11 @@ export default async function MangaDetailPage({ params }: { params: Promise<{ id
           id: remoteManga.id,
           title: remoteManga.title || 'Không có tiêu đề',
           description: remoteManga.description || 'Chưa có mô tả cho truyện này.',
-          status: (remoteManga.status as Manga['status']) || 'ONGOING',
-          contentRating: 'SAFE',
-          coverArtUrl: remoteManga.coverUrl || remoteManga.coverArtUrl || DEFAULT_MOCK_MANGA.coverArtUrl,
-          tags: remoteManga.tags || [{ id: '1', name: 'Manga' }],
-          authors: remoteManga.authors || [{ id: '1', name: 'MangaDex' }],
+          status: ((remoteManga.status || 'ONGOING').toUpperCase() as Manga['status']),
+          contentRating: ((remoteManga.contentRating || 'SAFE').toUpperCase() as Manga['contentRating']),
+          coverArtUrl: remoteManga.coverImageUrl || remoteManga.coverUrl || remoteManga.coverArtUrl || DEFAULT_MOCK_MANGA.coverArtUrl,
+          tags: Array.isArray(remoteManga.tags) && remoteManga.tags.length > 0 ? remoteManga.tags : [{ id: '1', name: remoteManga.originType?.toUpperCase() || 'Manga' }],
+          authors: Array.isArray(remoteManga.authors) && remoteManga.authors.length > 0 ? remoteManga.authors : [{ id: '1', name: 'MangaDex Official' }],
           artists: remoteManga.artists || [],
           createdAt: remoteManga.createdAt || new Date().toISOString(),
           updatedAt: remoteManga.updatedAt || new Date().toISOString()
@@ -72,20 +72,20 @@ export default async function MangaDetailPage({ params }: { params: Promise<{ id
     try {
       const remoteChapters = await fetchChaptersByMangaId(id);
       if (Array.isArray(remoteChapters) && remoteChapters.length > 0) {
-        chapters = remoteChapters.map((ch: { id: string; mangaId?: string; title?: string; chapterNumber?: string; createdAt?: string }) => ({
+        chapters = remoteChapters.map((ch: { id: string; mangaId?: string; title?: string; chapterNumber?: string; publishAt?: string; createdAt?: string }) => ({
           id: ch.id,
           mangaId: ch.mangaId || id,
-          title: ch.title || '',
-          chapterNumber: ch.chapterNumber || '0',
+          title: ch.title || `Chương ${ch.chapterNumber || ''}`,
+          chapterNumber: ch.chapterNumber || '1',
           pages: [],
-          publishAt: ch.createdAt || new Date().toISOString(),
-          readableAt: ch.createdAt || new Date().toISOString(),
+          publishAt: ch.publishAt || ch.createdAt || new Date().toISOString(),
+          readableAt: ch.publishAt || ch.createdAt || new Date().toISOString(),
           createdAt: ch.createdAt || new Date().toISOString(),
           updatedAt: ch.createdAt || new Date().toISOString()
         }));
       }
     } catch {
-      // Fallback to default
+      // Keep empty chapters if fetch fails
     }
   }
 
@@ -98,10 +98,10 @@ export default async function MangaDetailPage({ params }: { params: Promise<{ id
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             <MangaInfo manga={manga} />
-            <RatingPanel key={id} mangaId={id} />
-            <FollowMangaButton key={id} mangaId={id} />
+            <RatingPanel key={`rating-${id}`} mangaId={id} />
+            <FollowMangaButton key={`follow-${id}`} mangaId={id} />
             <ChapterList chapters={chapters} />
-            <CommentSection key={id} mangaId={id} />
+            <CommentSection key={`comment-${id}`} mangaId={id} />
           </div>
           <div className="hidden lg:block space-y-6">
             <div className="bg-[#16161a] border border-gray-800 rounded-xl p-6">

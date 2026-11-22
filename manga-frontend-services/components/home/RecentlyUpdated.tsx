@@ -153,7 +153,7 @@ function GroupBadge({ group }: { group: string }) {
 
 export default function RecentlyUpdated() {
   const [view, setView] = useState<'grid' | 'list'>('list')
-  const [chapters, setChapters] = useState<ChapterItem[]>(MOCK_CHAPTERS)
+  const [chapters, setChapters] = useState<ChapterItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -165,17 +165,20 @@ export default function RecentlyUpdated() {
             id: item.id,
             cover: item.coverImageUrl || 'https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?w=120&h=160&fit=crop&auto=format',
             title: item.title,
-            chapter: 'Latest',
-            group: item.originType === 'manga' ? 'Local' : 'MangaDex',
+            chapter: 'Đọc ngay',
+            group: item.mangadexId ? 'MangaDex' : 'Local',
             time: formatRelativeTime(item.updatedAt || item.createdAt),
             status: item.status === 'completed' ? 'Completed' : 'Ongoing',
             views: formatViews(item.viewsCount || 0),
           }))
           setChapters(mapped)
+        } else if (isMounted) {
+          setChapters(MOCK_CHAPTERS)
         }
       })
       .catch((err) => {
         console.warn('Backend /recent-updates API call failed:', err)
+        if (isMounted) setChapters(MOCK_CHAPTERS)
       })
       .finally(() => {
         if (isMounted) setIsLoading(false)

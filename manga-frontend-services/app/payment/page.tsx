@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAuthStore } from '@/store/authStore'
 import { axiosClient } from '@/lib/axiosClient'
-import { Coins, Crown, CheckCircle2, ShieldCheck, ArrowRight, History, Loader2, Sparkles, AlertCircle } from 'lucide-react'
+import { Coins, Crown, CheckCircle2, ShieldCheck, ArrowRight, History, Loader2, Sparkles, AlertCircle, Copy, CreditCard } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 interface PaymentPackage {
@@ -37,6 +37,13 @@ export default function PaymentPage() {
   const [history, setHistory] = useState<Transaction[]>([])
   const [historyLoading, setHistoryLoading] = useState<boolean>(false)
   const [error, setError] = useState<string>('')
+  const [copiedField, setCopiedField] = useState<string>('')
+
+  const copyTestField = (label: string, value: string) => {
+    navigator.clipboard.writeText(value)
+    setCopiedField(label)
+    setTimeout(() => setCopiedField(''), 2000)
+  }
 
   // Tải thông tin người dùng mới nhất (coins, vip)
   useEffect(() => {
@@ -283,6 +290,42 @@ export default function PaymentPage() {
               </>
             )}
           </button>
+        </div>
+
+        {/* HỘP THÔNG TIN THẺ TEST VNPAY SANDBOX (HỖ TRỢ COPY 1 CHẠM KHI DEMO) */}
+        <div className="mt-6 pt-5 border-t border-gray-800/80">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-bold text-amber-300 flex items-center gap-2">
+              <CreditCard className="w-4 h-4 text-amber-400" />
+              Thông tin Thẻ Ngân hàng NCB Thử nghiệm (Dùng để Demo tại cổng VNPay Sandbox)
+            </p>
+            {copiedField && (
+              <span className="text-[11px] font-semibold text-emerald-400">
+                Đã sao chép {copiedField}!
+              </span>
+            )}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+            {[
+              { label: 'Số thẻ (Ngân hàng NCB)', value: '9704198526191432198' },
+              { label: 'Tên chủ thẻ', value: 'NGUYEN VAN A' },
+              { label: 'Ngày phát hành', value: '07/15' },
+              { label: 'Mật khẩu OTP', value: '123456' },
+            ].map((field) => (
+              <div
+                key={field.label}
+                onClick={() => copyTestField(field.label, field.value)}
+                title="Bấm để sao chép nhanh"
+                className="p-3 rounded-xl bg-gray-950/80 border border-gray-800 hover:border-amber-500/40 flex items-center justify-between cursor-pointer group transition"
+              >
+                <div>
+                  <p className="text-[10px] text-gray-500">{field.label}</p>
+                  <p className="font-mono font-bold text-gray-200 mt-0.5">{field.value}</p>
+                </div>
+                <Copy className="w-3.5 h-3.5 text-gray-500 group-hover:text-amber-400 transition" />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
