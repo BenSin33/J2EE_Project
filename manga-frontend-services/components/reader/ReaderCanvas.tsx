@@ -4,14 +4,35 @@ import { ReaderPage } from '@/types/reader';
 function PageImage({ page, eager }: { page: ReaderPage; eager: boolean }) {
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
-  return <div data-reader-page={page.pageNumber} className="relative w-full bg-[#16161a]" style={{ aspectRatio: page.width + '/' + page.height }}>
-    {failed ? <div className="absolute inset-0 flex flex-col items-center justify-center gap-4" role="alert">
-      <p>Không tải được ảnh trang {page.pageNumber}.</p>
-      <button className="rounded bg-gray-700 px-4 py-2" onClick={() => { setFailed(false); setAttempt(a => a + 1); }}>Thử lại ảnh</button>
+  return <div
+    data-reader-page={page.pageNumber}
+    className="relative w-full bg-[#16161a] rounded-lg overflow-hidden"
+    style={failed ? { minHeight: '420px' } : undefined}
+  >
+    {failed ? <div className="flex min-h-[420px] flex-col items-center justify-center gap-3 p-6 text-center border border-gray-800/60 rounded-lg" role="alert">
+      <p className="font-semibold text-gray-200">Không tải được ảnh trang {page.pageNumber}.</p>
+      {page.imageUrl.includes('uploads.mangadex.org') && (
+        <p className="max-w-md text-xs text-gray-400 leading-relaxed">
+          Máy chủ <code className="text-amber-300">uploads.mangadex.org</code> hiện đang bật cổng xác thực chống Bot (<code className="text-amber-300">POWBlock</code>) trả về HTML thay vì ảnh trực tiếp nên trình duyệt chặn bằng <code className="text-rose-400">ERR_BLOCKED_BY_ORB</code>.
+        </p>
+      )}
+      <div className="flex flex-wrap items-center justify-center gap-2 mt-1">
+        <button className="rounded-lg bg-gray-700 hover:bg-gray-600 px-4 py-2 text-xs font-medium transition cursor-pointer" onClick={() => { setFailed(false); setAttempt(a => a + 1); }}>Thử lại ảnh</button>
+        <a href={page.imageUrl} target="_blank" rel="noopener noreferrer" className="rounded-lg bg-purple-600/20 border border-purple-500/40 hover:bg-purple-600/30 text-purple-300 px-4 py-2 text-xs font-medium transition">
+          Mở link ảnh gốc ↗
+        </a>
+      </div>
     </div> : (
       // eslint-disable-next-line @next/next/no-img-element
-      <img key={attempt} src={page.imageUrl} alt={'Trang ' + page.pageNumber} width={page.width} height={page.height}
-        loading={eager ? 'eager' : 'lazy'} onError={() => setFailed(true)} className="block h-auto w-full" />
+      <img
+        key={attempt}
+        src={page.imageUrl}
+        alt={'Trang ' + page.pageNumber}
+        loading={eager ? 'eager' : 'lazy'}
+        referrerPolicy="no-referrer"
+        onError={() => setFailed(true)}
+        className="block h-auto w-full object-contain"
+      />
     )}
   </div>;
 }

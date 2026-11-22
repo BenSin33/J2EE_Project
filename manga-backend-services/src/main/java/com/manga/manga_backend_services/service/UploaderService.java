@@ -104,7 +104,19 @@ public class UploaderService {
         return role.equals("ROLE_ADMIN") || role.equals("ADMIN");
     }
 
-    /** Mọi tài khoản không bị khoá đều được đăng truyện (truyện chờ Admin duyệt) */
+    /** Kiểm tra quyền Kiểm duyệt viên (ROLE_MODERATOR) hoặc Quản trị viên (ROLE_ADMIN) */
+    public static boolean isModeratorOrAdmin(User user) {
+        String role = user.getRole() == null ? "" : user.getRole().toUpperCase();
+        return isAdmin(user) || role.equals("ROLE_MODERATOR") || role.equals("MODERATOR");
+    }
+
+    /** Kiểm tra nhóm dịch/tác giả chính thức (ROLE_UPLOADER, ROLE_MODERATOR, ROLE_ADMIN) */
+    public static boolean isVerifiedUploader(User user) {
+        String role = user.getRole() == null ? "" : user.getRole().toUpperCase();
+        return isModeratorOrAdmin(user) || role.equals("ROLE_UPLOADER") || role.equals("UPLOADER");
+    }
+
+    /** Mọi tài khoản không bị khoá đều được đăng truyện (truyện của ROLE_USER chờ duyệt, của ROLE_UPLOADER/ADMIN được duyệt ngay) */
     public static boolean isUploader(User user) {
         return !Boolean.TRUE.equals(user.getIsBanned());
     }
@@ -261,8 +273,8 @@ public class UploaderService {
             Manga manga = Manga.builder()
                     .uploaderId(user.getId())
                     .title(request.getTitle().trim())
-                    // Truyện do ADMIN tạo được duyệt luôn, của UPLOADER chờ Admin duyệt
-                    .approvalStatus(isAdmin(user) ? "approved" : "pending")
+                    // Truyện do ADMIN / MODERATOR / UPLOADER chính thức tạo được duyệt luôn, của ROLE_USER chờ duyệt
+                    .approvalStatus(isVerifiedUploader(user) ? "approved" : "pending")
                     .build();
             applyFields(manga, request);
             manga = mangaRepository.save(manga);

@@ -21,8 +21,16 @@ export async function adminFetch(endpoint: string, options: RequestInit = {}): P
     ? endpoint
     : `${ADMIN_API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
 
-  return fetch(url, {
+  const res = await fetch(url, {
     ...options,
     headers,
   });
+
+  if (res.status === 401 || res.headers.get('X-JWT-Expired') === 'true') {
+    if (typeof window !== 'undefined') {
+      useAuthStore.getState().logout();
+    }
+  }
+
+  return res;
 }

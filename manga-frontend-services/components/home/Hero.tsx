@@ -1,6 +1,24 @@
 import { useState, useEffect, useCallback } from 'react'
+import Link from 'next/link'
+import { fetchRecentUpdates } from '@/lib/api'
 
-const SLIDES = [
+interface HeroSlide {
+  id: string | number
+  title: string
+  subtitle: string
+  author: string
+  group: string
+  genres: string[]
+  rating: number
+  votes: string
+  chapter: string
+  description: string
+  image: string
+  accent: string
+  gradient: string
+}
+
+const SLIDES: HeroSlide[] = [
   {
     id: 1,
     title: 'Solo Leveling',
@@ -65,9 +83,40 @@ function StarRating({ rating }: { rating: number }) {
 }
 
 export default function Hero() {
+  const [slides, setSlides] = useState<HeroSlide[]>(SLIDES)
   const [active, setActive] = useState(0)
   const [prev, setPrev] = useState(0)
   const [isTransitioning, setIsTransitioning] = useState(false)
+
+  useEffect(() => {
+    let isMounted = true
+    fetchRecentUpdates()
+      .then((data: any[]) => {
+        if (isMounted && Array.isArray(data) && data.length > 0) {
+          const mapped: HeroSlide[] = data.slice(0, 4).map((m, idx) => ({
+            id: m.id,
+            title: m.title,
+            subtitle: m.originType ? `Nguồn chính thức · ${m.originType.toUpperCase()}` : 'Truyện nổi bật trên MangaHub',
+            author: 'MangaDex Official',
+            group: m.mangadexId ? 'MangaDex Sync' : 'MangaHub Local',
+            genres: [m.originType?.toUpperCase() || 'MANGA', m.status?.toUpperCase() || 'ONGOING', m.contentRating?.toUpperCase() || 'SAFE'],
+            rating: Number(m.ratingScore) > 0 ? Number(m.ratingScore) : 4.9,
+            votes: `${Math.max(1, m.ratingCount || 12)} đánh giá`,
+            chapter: 'Full Chap',
+            description: m.description || 'Khám phá bộ truyện hấp dẫn đã được đồng bộ đầy đủ chương và trang ảnh chất lượng cao trên MangaHub.',
+            image: m.coverImageUrl || SLIDES[idx % SLIDES.length].image,
+            accent: '#8b5cf6',
+            gradient: 'from-[#0d0a1a] via-[#1a0f2e]/80 to-transparent',
+          }))
+          setSlides(mapped)
+          setActive(0)
+        }
+      })
+      .catch(() => {})
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const goTo = useCallback((idx: number) => {
     if (isTransitioning || idx === active) return
@@ -79,17 +128,17 @@ export default function Hero() {
 
   useEffect(() => {
     const t = setInterval(() => {
-      goTo((active + 1) % SLIDES.length)
+      goTo((active + 1) % slides.length)
     }, 6000)
     return () => clearInterval(t)
-  }, [active, goTo])
+  }, [active, goTo, slides.length])
 
-  const slide = SLIDES[active]
+  const slide = slides[active] || SLIDES[0]
 
   return (
     <section className="relative w-full overflow-hidden" style={{ height: '580px' }}>
       {/* Background images */}
-      {SLIDES.map((s, i) => (
+      {slides.map((s, i) => (
         <div
           key={s.id}
           className="absolute inset-0 transition-opacity duration-700"
@@ -199,14 +248,18 @@ export default function Hero() {
 
           {/* CTAs */}
           <div className="flex items-center gap-3">
-            <button className="btn-primary flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-white text-sm"
-              style={{ fontFamily: 'Outfit,sans-serif' }}>
+            <Link
+              href={typeof slide.id === 'string' ? `/manga/${slide.id}` : '/'}
+              className="btn-primary flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-white text-sm"
+              style={{ fontFamily: 'Outfit,sans-serif' }}
+            >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <polygon points="5,3 13,8 5,13" fill="white" />
               </svg>
-              Read {slide.chapter}
-            </button>
-            <button
+              Đọc ngay ({slide.chapter})
+            </Link>
+            <Link
+              href="/library"
               className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-colors"
               style={{
                 background: 'rgba(255,255,255,0.06)',
@@ -218,15 +271,15 @@ export default function Hero() {
               <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
                 <path d="M3 2h9a1 1 0 0 1 1 1v10l-4.5-3L4 13V3a1 1 0 0 1 1-1z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
               </svg>
-              Add to Library
-            </button>
+              Tủ sách
+            </Link>
           </div>
         </div>
       </div>
 
       {/* Slide indicators */}
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2">
-        {SLIDES.map((s, i) => (
+        {slides.map((s, i) => (
           <button
             key={s.id}
             onClick={() => goTo(i)}
@@ -244,7 +297,7 @@ export default function Hero() {
       <div
         className="absolute right-10 top-1/2 -translate-y-1/2 z-10 flex flex-col gap-3 hidden lg:flex"
       >
-        {SLIDES.map((s, i) => (
+        {slides.map((s, i) => (
           <button
             key={s.id}
             onClick={() => goTo(i)}

@@ -130,7 +130,7 @@ export default function TopTrending() {
   const trackRef = useRef<HTMLDivElement>(null)
   const [canLeft, setCanLeft] = useState(false)
   const [canRight, setCanRight] = useState(true)
-  const [trending, setTrending] = useState<TrendingItem[]>(MOCK_TRENDING)
+  const [trending, setTrending] = useState<TrendingItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -153,10 +153,13 @@ export default function TopTrending() {
             }
           })
           setTrending(mapped)
+        } else if (isMounted) {
+          setTrending(MOCK_TRENDING)
         }
       })
       .catch((err) => {
         console.warn('Backend /top-trending API call failed:', err)
+        if (isMounted) setTrending(MOCK_TRENDING)
       })
       .finally(() => {
         if (isMounted) setIsLoading(false)

@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/payment")
+@RequestMapping({"/api/v1/payment", "/api/payment"})
 @RequiredArgsConstructor
 @Tag(name = "Payment (VNPay)", description = "APIs thanh toán online qua cổng VNPay Sandbox (Yêu cầu 3)")
 @CrossOrigin(origins = "http://localhost:3000")

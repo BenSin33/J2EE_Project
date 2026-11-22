@@ -59,9 +59,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                 }
             }
+        } catch (io.jsonwebtoken.ExpiredJwtException e) {
+            // Token đã hết hạn: gắn header báo cho Frontend tự động xóa token cũ trong localStorage
+            response.setHeader("X-JWT-Expired", "true");
+            response.setHeader("Access-Control-Expose-Headers", "X-JWT-Expired");
+            logger.warn("JWT token expired: " + e.getMessage());
         } catch (Exception e) {
-            // Lỗi JWT hết hạn hoặc sai chữ ký, để request trôi qua, security filter chuỗi sẽ chặn ở controller
-            logger.error("Cannot set user authentication: " + e.getMessage());
+            // Lỗi JWT sai chữ ký, để request trôi qua, security filter chuỗi sẽ chặn ở controller
+            logger.warn("Cannot set user authentication: " + e.getMessage());
         }
         
         filterChain.doFilter(request, response);

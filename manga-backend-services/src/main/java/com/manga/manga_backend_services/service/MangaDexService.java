@@ -525,10 +525,8 @@ public class MangaDexService {
                 String imgUrl;
                 if (p.getS3WebpUrl() != null) {
                     imgUrl = p.getS3WebpUrl();
-                } else if (p.getDataSaverFileName() != null && hash != null) {
-                    imgUrl = String.format("%s/data-saver/%s/%s", UPLOADS_BASE, hash, p.getDataSaverFileName());
-                } else if (p.getImageFileName() != null && hash != null) {
-                    imgUrl = String.format("%s/data/%s/%s", UPLOADS_BASE, hash, p.getImageFileName());
+                } else if ((p.getDataSaverFileName() != null || p.getImageFileName() != null) && hash != null) {
+                    imgUrl = String.format("/api/v1/chapters/%s/pages/%d/image", chapterId, p.getPageNumber());
                 } else {
                     imgUrl = "/api/v1/reader-demo/images/" + p.getPageNumber();
                 }
@@ -573,9 +571,7 @@ public class MangaDexService {
                         .height(1100)
                         .build());
 
-                String imgUrl = dataSaverFile != null
-                        ? String.format("%s/data-saver/%s/%s", UPLOADS_BASE, atHome.hash(), dataSaverFile)
-                        : String.format("%s/data/%s/%s", UPLOADS_BASE, atHome.hash(), originalFile);
+                String imgUrl = String.format("/api/v1/chapters/%s/pages/%d/image", chapterId, pageNum);
                 pages.add(new ReaderChapterResponse.Page(pageNum, imgUrl, 800, 1100));
             }
 
@@ -591,6 +587,48 @@ public class MangaDexService {
         }
 
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Chương chưa có nội dung trang");
+    }
+
+    public record PageImageData(byte[] bytes, MediaType contentType) {}
+
+    /**
+     * Tải ảnh trang truyện từ MangaDex thông qua Backend Proxy (với User-Agent hợp lệ)
+     * để trình duyệt hiển thị trực tiếp mà không bị lỗi ERR_BLOCKED_BY_ORB.
+     */
+    @Transactional(readOnly = true)
+    public PageImageData getChapterPageImage(UUID chapterId, int pageNumber) {
+        Chapter chapter = chapterRepository.findById(chapterId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Chương không tồn tại"));
+
+        List<ChapterPage> existingPages = chapterPageRepository.findByChapterIdOrderByPageNumberAsc(chapterId);
+        ChapterPage page = existingPages.stream()
+                .filter(p -> p.getPageNumber() != null && p.getPageNumber() == pageNumber)
+                .findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy trang " + pageNumber));
+
+        if (page.getS3WebpUrl() != null && !page.getS3WebpUrl().isBlank()) {
+            byte[] bytes = downloadBytes(page.getS3WebpUrl());
+            return new PageImageData(bytes, MediaType.parseMediaType("image/webp"));
+        }
+
+        String hash = chapter.getMangadexHash();
+        if (hash == null || hash.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Chương không có hash MangaDex");
+        }
+
+        String fileName = page.getDataSaverFileName() != null ? page.getDataSaverFileName() : page.getImageFileName();
+        String mode = page.getDataSaverFileName() != null ? "data-saver" : "data";
+        String targetUrl = String.format("%s/%s/%s/%s", UPLOADS_BASE, mode, hash, fileName);
+
+        byte[] bytes = downloadBytes(targetUrl);
+        MediaType mediaType = MediaType.IMAGE_JPEG;
+        if (fileName != null) {
+            String lower = fileName.toLowerCase();
+            if (lower.endsWith(".png")) mediaType = MediaType.IMAGE_PNG;
+            else if (lower.endsWith(".webp")) mediaType = MediaType.parseMediaType("image/webp");
+            else if (lower.endsWith(".gif")) mediaType = MediaType.IMAGE_GIF;
+        }
+        return new PageImageData(bytes, mediaType);
     }
 
     // =====================================================================
@@ -624,28 +662,32 @@ public class MangaDexService {
                 skipped++;
                 continue;
             }
-            String sourceUrl = page.getImageFileName() != null
-                    ? String.format("%s/data/%s/%s", UPLOADS_BASE, hash, page.getImageFileName())
-                    : String.format("%s/data-saver/%s/%s", UPLOADS_BASE, hash, page.getDataSaverFileName());
-
-            byte[] bytes;
             try {
-                bytes = downloadBytes(sourceUrl);
-            } catch (Exception e) {
-                // Ảnh gốc lỗi thì thử bản data-saver
-                if (page.getDataSaverFileName() == null) throw e;
-                sourceUrl = String.format("%s/data-saver/%s/%s", UPLOADS_BASE, hash, page.getDataSaverFileName());
-                bytes = downloadBytes(sourceUrl);
-            }
+                String sourceUrl = page.getImageFileName() != null
+                        ? String.format("%s/data/%s/%s", UPLOADS_BASE, hash, page.getImageFileName())
+                        : String.format("%s/data-saver/%s/%s", UPLOADS_BASE, hash, page.getDataSaverFileName());
 
-            CloudinaryService.UploadResult result = cloudinaryService.upload(
-                    bytes, "chapters/" + chapterId, String.format("page-%03d", page.getPageNumber()), true);
-            page.setS3OriginUrl(sourceUrl);
-            page.setS3WebpUrl(result.secureUrl());
-            if (result.width() > 0) page.setWidth(result.width());
-            if (result.height() > 0) page.setHeight(result.height());
-            chapterPageRepository.save(page);
-            uploaded++;
+                byte[] bytes;
+                try {
+                    bytes = downloadBytes(sourceUrl);
+                } catch (Exception e) {
+                    if (page.getDataSaverFileName() == null) throw e;
+                    sourceUrl = String.format("%s/data-saver/%s/%s", UPLOADS_BASE, hash, page.getDataSaverFileName());
+                    bytes = downloadBytes(sourceUrl);
+                }
+
+                CloudinaryService.UploadResult result = cloudinaryService.upload(
+                        bytes, "chapters/" + chapterId, String.format("page-%03d", page.getPageNumber()), true);
+                page.setS3OriginUrl(sourceUrl);
+                page.setS3WebpUrl(result.secureUrl());
+                if (result.width() > 0) page.setWidth(result.width());
+                if (result.height() > 0) page.setHeight(result.height());
+                chapterPageRepository.save(page);
+                uploaded++;
+                pause();
+            } catch (Exception e) {
+                log.warn("Không thể upload trang {} của chương {}: {}", page.getPageNumber(), chapterId, e.getMessage());
+            }
         }
 
         chapter.setStorageType("cloudinary");
@@ -768,16 +810,34 @@ public class MangaDexService {
         }
     }
 
+    private final java.net.http.HttpClient httpClient = java.net.http.HttpClient.newBuilder()
+            .connectTimeout(java.time.Duration.ofSeconds(15))
+            .followRedirects(java.net.http.HttpClient.Redirect.NORMAL)
+            .build();
+
     private byte[] downloadBytes(String url) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("User-Agent", userAgent);
-        headers.setAccept(List.of(MediaType.ALL));
         try {
-            ResponseEntity<byte[]> response = restTemplate.exchange(URI.create(url), HttpMethod.GET, new HttpEntity<>(headers), byte[].class);
-            if (response.getBody() == null || response.getBody().length == 0) {
+            java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .timeout(java.time.Duration.ofSeconds(30))
+                    .header("User-Agent", "MyMangaApp/1.0")
+                    .header("Accept", "image/avif,image/webp,image/apng,image/*,*/*;q=0.8")
+                    .GET()
+                    .build();
+
+            java.net.http.HttpResponse<byte[]> response = httpClient.send(request, java.net.http.HttpResponse.BodyHandlers.ofByteArray());
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                throw new IllegalStateException("HTTP " + response.statusCode());
+            }
+            String contentType = response.headers().firstValue("content-type").orElse("");
+            if (!contentType.isEmpty() && !contentType.toLowerCase().startsWith("image/")) {
+                throw new IllegalStateException("MangaDex trả về " + contentType + " thay vì dữ liệu ảnh");
+            }
+            byte[] body = response.body();
+            if (body == null || body.length == 0) {
                 throw new IllegalStateException("ảnh rỗng");
             }
-            return response.getBody();
+            return body;
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Không tải được ảnh " + url + ": " + e.getMessage());
         }

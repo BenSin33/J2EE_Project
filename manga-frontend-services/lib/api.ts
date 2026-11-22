@@ -62,6 +62,11 @@ async function readerAccountRequest(path: string, options: RequestInit = {}) {
     headers.set('Authorization', `Bearer ${token}`);
   }
   const res = await fetch(API_BASE_URL + '/me/' + path, { ...options, headers, credentials: 'include', cache: 'no-store' });
+  if (res.status === 401 || res.headers.get('X-JWT-Expired') === 'true') {
+    if (typeof window !== 'undefined') {
+      useAuthStore.getState().logout();
+    }
+  }
   if (!res.ok) throw new ReaderApiError(res.status, res.status === 401 ? 'Bạn cần đăng nhập để dùng chức năng này.' : res.status === 403 ? 'Tài khoản không được phép thực hiện thao tác.' : 'Không thực hiện được thao tác (HTTP ' + res.status + ').');
   const text = await res.text();
   return text ? JSON.parse(text) : null;

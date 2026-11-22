@@ -34,9 +34,23 @@ public class SecurityConfig {
                         "/error",
                         "/api/v1/reader-demo/**",
                         "/api/v1/payment/packages",
-                        "/api/v1/payment/vnpay-callback"
+                        "/api/v1/payment/vnpay-callback",
+                        "/api/payment/packages",
+                        "/api/payment/vnpay-callback"
                 ).permitAll()
-                .requestMatchers("/api/v1/admin/**", "/api/v1/crawler/**").hasAnyAuthority("ROLE_ADMIN", "ADMIN")
+                // Nhóm 4 - ROLE_ADMIN: Toàn quyền hệ thống (Đổi Role, Xóa cứng truyện, Cào dữ liệu MangaDex)
+                .requestMatchers("/api/v1/crawler/**").hasAnyAuthority("ROLE_ADMIN", "ADMIN")
+                .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/v1/admin/users/*/role").hasAnyAuthority("ROLE_ADMIN", "ADMIN")
+                .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/v1/admin/mangas/**").hasAnyAuthority("ROLE_ADMIN", "ADMIN")
+                // Nhóm 3 - ROLE_MODERATOR & ROLE_ADMIN: Kiểm duyệt truyện, xử lý báo cáo vi phạm, quản lý thẻ & kỷ luật (Mute/Ban)
+                .requestMatchers("/api/v1/admin/**").hasAnyAuthority("ROLE_ADMIN", "ADMIN", "ROLE_MODERATOR", "MODERATOR")
+                // Nhóm 2 - ROLE_UPLOADER (cùng Admin/Mod/User đăng truyện chờ duyệt): Quản lý & đăng tải chương truyện
+                .requestMatchers("/api/v1/uploader/**").hasAnyAuthority(
+                        "ROLE_UPLOADER", "UPLOADER",
+                        "ROLE_MODERATOR", "MODERATOR",
+                        "ROLE_ADMIN", "ADMIN",
+                        "ROLE_USER", "USER"
+                )
                 .requestMatchers(org.springframework.http.HttpMethod.GET,
                         "/api/v1/mangas/**",
                         "/api/v1/manga/**",
@@ -44,11 +58,19 @@ public class SecurityConfig {
                         "/api/v1/mangas/*/comments",
                         "/api/v1/mangas/*/rating"
                 ).permitAll()
-                .requestMatchers("/api/v1/me/**").authenticated()
+                // Nhóm 1 - ROLE_USER (Độc giả đã đăng nhập): Tủ sách, Lịch sử đọc, Thông báo, Nạp xu VNPay
+                .requestMatchers("/api/v1/me/**", "/api/v1/payment/**", "/api/payment/**").authenticated()
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint((request, response, authException) -> {
+                    response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"error\":\"Unauthorized\",\"message\":\"Phiên đăng nhập đã hết hạn hoặc chưa đăng nhập.\"}");
+                })
             )
             .authenticationProvider(authenticationProvider)
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
