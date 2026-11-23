@@ -35,7 +35,13 @@ public class JwtService {
     }
 
     public String generateToken(UserDetails userDetails) {
-        return generateToken(new HashMap<>(), userDetails);
+        Map<String, Object> extraClaims = new HashMap<>();
+        if (userDetails instanceof com.manga.manga_backend_services.entity.User u) {
+            if (u.getId() != null) extraClaims.put("userId", u.getId().toString());
+            if (u.getEmail() != null) extraClaims.put("email", u.getEmail());
+            if (u.getRole() != null) extraClaims.put("role", u.getRole());
+        }
+        return generateToken(extraClaims, userDetails);
     }
 
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {

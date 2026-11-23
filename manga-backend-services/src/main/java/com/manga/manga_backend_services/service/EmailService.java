@@ -19,6 +19,12 @@ public class EmailService {
     @Autowired(required = false)
     private JavaMailSender mailSender;
 
+    @Autowired(required = false)
+    private com.manga.manga_backend_services.client.NotificationMailClient notificationMailClient;
+
+    @Value("${microservices.mail.remote-enabled:false}")
+    private boolean remoteMailEnabled;
+
     @Value("${app.mail.enabled:true}")
     private boolean mailEnabled;
 
@@ -63,6 +69,15 @@ public class EmailService {
      * Gửi mã OTP xác nhận tài khoản hoặc quên mật khẩu
      */
     public void sendOtpEmail(String toEmail, String otpCode, String username) {
+        if (remoteMailEnabled && notificationMailClient != null) {
+            try {
+                notificationMailClient.sendOtp(new com.manga.manga_backend_services.client.NotificationMailClient.OtpMailRequest(toEmail, otpCode, username));
+                log.info("[OpenFeign -> notification-mail-service] Đã chuyển tiếp yêu cầu gửi OTP tới: {}", toEmail);
+                return;
+            } catch (Exception e) {
+                log.warn("[OpenFeign fallback] Không gọi được notification-mail-service, chuyển sang gửi nội bộ: {}", e.getMessage());
+            }
+        }
         String safeName = (username != null && !username.isBlank()) ? username : "Độc giả";
         String subject = "MangaHub - Mã xác thực OTP đặt lại mật khẩu: " + otpCode;
 
@@ -108,6 +123,15 @@ public class EmailService {
      * Gửi email chào mừng khi đăng ký tài khoản thành công
      */
     public void sendWelcomeEmail(String toEmail, String username) {
+        if (remoteMailEnabled && notificationMailClient != null) {
+            try {
+                notificationMailClient.sendWelcome(new com.manga.manga_backend_services.client.NotificationMailClient.WelcomeMailRequest(toEmail, username));
+                log.info("[OpenFeign -> notification-mail-service] Đã chuyển tiếp yêu cầu gửi Welcome Mail tới: {}", toEmail);
+                return;
+            } catch (Exception e) {
+                log.warn("[OpenFeign fallback] Không gọi được notification-mail-service, chuyển sang gửi nội bộ: {}", e.getMessage());
+            }
+        }
         String safeName = (username != null && !username.isBlank()) ? username : "Độc giả mới";
         String subject = "Chào mừng bạn đến với MangaHub!";
 
