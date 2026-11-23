@@ -1,0 +1,148 @@
+services:
+  # 1. Service Registry & Discovery (Eureka Server - Port 8761)
+  discovery-server:
+    build:
+      context: ./discovery-server
+      dockerfile: Dockerfile
+    container_name: mangahub-discovery-server
+    ports:
+      - "8761:8761"
+      - "127.0.0.1:8761:8761"
+    environment:
+      JAVA_OPTS: "-Xms64m -Xmx192m"
+    mem_limit: 320m
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8761/actuator/health | grep -q UP || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    networks:
+      - mangahub-net
+    restart: unless-stopped
+
+  # 2. Core Business Microservice (Auth, Manga, Uploader, Crawler, Interaction, Admin - Port 8081)
+  manga-core-service:
+    build:
+      context: ./manga-backend-services
+      dockerfile: Dockerfile
+    container_name: mangahub-core-service
+    ports:
+      - "8081:8081"
+      - "127.0.0.1:8081:8081"
+    environment:
+      JAVA_OPTS: "-Xms128m -Xmx384m"
+      SERVER_PORT: "8081"
+      EUREKA_URL: "http://discovery-server:8761/eureka"
+      EUREKA_ENABLED: "true"
+      MICROSERVICES_MAIL_REMOTE_ENABLED: "true"
+      SPRING_MAIL_USERNAME: "${SPRING_MAIL_USERNAME:-mangahub.j2ee@gmail.com}"
+      SPRING_MAIL_PASSWORD: "${SPRING_MAIL_PASSWORD:-}"
+      GOOGLE_CLIENT_ID: "${GOOGLE_CLIENT_ID:-}"
+    mem_limit: 576m
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health | grep -q UP || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - mangahub-net
+    restart: unless-stopped
+
+  # 3. Payment Microservice (VNPay Sandbox + OpenFeign -> Core & Mail - Port 8082)
+  payment-service:
+    build:
+      context: ./payment-service
+      dockerfile: Dockerfile
+    container_name: mangahub-payment-service
+    ports:
+      - "8082:8082"
+      - "127.0.0.1:8082:8082"
+    environment:
+      TZ: "Asia/Ho_Chi_Minh"
+      JAVA_OPTS: "-Xms64m -Xmx224m"
+      EUREKA_URL: "http://discovery-server:8761/eureka"
+      VNPAY_TMN_CODE: "${VNPAY_TMN_CODE:-CGXZLS0Z}"
+      VNPAY_HASH_SECRET: "${VNPAY_HASH_SECRET:-XNBCJFAKAZQSGZSSTGUBMVWFFWCGUSYQ}"
+      VNPAY_RETURN_URL: "${VNPAY_RETURN_URL:-http://localhost:3000/payment/result}"
+    mem_limit: 384m
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8082/actuator/health | grep -q UP || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 25s
+    networks:
+      - mangahub-net
+    restart: unless-stopped
+
+  # 4. Notification & Spring Email Microservice (OTP, Welcome, Receipt, Chapter Alerts - Port 8083)
+  notification-mail-service:
+    build:
+      context: ./notification-mail-service
+      dockerfile: Dockerfile
+    container_name: mangahub-notification-mail-service
+    ports:
+      - "8083:8083"
+      - "127.0.0.1:8083:8083"
+    environment:
+      TZ: "Asia/Ho_Chi_Minh"
+      JAVA_OPTS: "-Xms64m -Xmx224m"
+      EUREKA_URL: "http://discovery-server:8761/eureka"
+      SPRING_MAIL_HOST: "${SPRING_MAIL_HOST:-smtp.gmail.com}"
+      SPRING_MAIL_PORT: "${SPRING_MAIL_PORT:-587}"
+      SPRING_MAIL_USERNAME: "${SPRING_MAIL_USERNAME:-mangahub.j2ee@gmail.com}"
+      SPRING_MAIL_PASSWORD: "${SPRING_MAIL_PASSWORD:-}"
+      APP_MAIL_ENABLED: "${APP_MAIL_ENABLED:-true}"
+      NOTIFICATIONS_WORKER_ENABLED: "${NOTIFICATIONS_WORKER_ENABLED:-false}"
+    mem_limit: 384m
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8083/actuator/health | grep -q UP || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 25s
+    networks:
+      - mangahub-net
+    restart: unless-stopped
+
+  # 5. Spring Cloud API Gateway (Entry Point duy nhất cho Next.js Frontend - Port 8080)
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: mangahub-api-gateway
+    ports:
+      - "8080:8080"
+      - "127.0.0.1:8080:8080"
+    environment:
+      JAVA_OPTS: "-Xms64m -Xmx192m"
+      EUREKA_URL: "http://discovery-server:8761/eureka"
+    mem_limit: 320m
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health | grep -q UP || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - mangahub-net
+    restart: unless-stopped
+
+networks:
+  mangahub-net:
+    driver: bridge
+
