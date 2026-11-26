@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { getLibrary } from '@/lib/api';
 import { Library, BOOKMARK_FOLDERS } from '@/types/bookmark';
 import { BookmarkControls } from '@/components/library/BookmarkControls';
+import { Navbar } from '@/components/common/Navbar';
+import { Footer } from '@/components/common/Footer';
 function LibraryContent({ folder }: { folder: string }) {
   const [data,setData] = useState<Library | null>(null);
   const [page,setPage] = useState(0);
@@ -39,10 +41,9 @@ function LibraryContent({ folder }: { folder: string }) {
 }
 export default function LibraryPage() {
   const [folder,setFolder] = useState('');
-  return <main className="min-h-screen bg-[#0a0a0c] px-4 py-8 text-gray-100"><div className="mx-auto max-w-5xl">
-    <nav className="flex gap-4"><Link href="/" className="text-violet-300">← Trang chủ</Link><Link href="/history" className="text-violet-300">Lịch sử đọc</Link></nav>
-    <h1 className="mb-2 mt-6 text-3xl font-bold">Tủ sách</h1><p className="mb-6 text-gray-400">Quản lý truyện bạn theo dõi và trạng thái đọc.</p>
+  return <div className="flex min-h-screen flex-col bg-[#0a0a0c] text-gray-100"><Navbar /><main className="flex-1 px-4 py-8"><div className="mx-auto max-w-5xl">
+    <h1 className="mb-2 text-3xl font-bold">Tủ sách</h1><p className="mb-6 text-gray-400">Quản lý truyện bạn theo dõi và trạng thái đọc.</p>
     <label className="mb-6 block">Lọc trạng thái <select className="ml-2 rounded border border-gray-700 bg-gray-900 px-3 py-2" value={folder} onChange={event => setFolder(event.target.value)}><option value="">Tất cả</option>{Object.entries(BOOKMARK_FOLDERS).map(([value,label]) => <option key={value} value={value}>{label}</option>)}</select></label>
     <LibraryContent key={folder} folder={folder} />
-  </div></main>;
+  </div></main><Footer /></div>;
 }

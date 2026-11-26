@@ -14,13 +14,13 @@ import java.util.Random;
 @Getter
 public class VNPayConfig {
 
-    @Value("${vnpay.tmn-code:CGXZLS0Z}")
+    @Value("${vnpay.tmn-code:75K0A6Q3}")
     private String vnpTmnCode;
 
-    @Value("${vnpay.hash-secret:XNBCJFAKAZQSGZSSTGUBMVWFFWCGUSYQ}")
+    @Value("${vnpay.hash-secret:RRIXUDTYSFKMKQNWRNWCXVDDARYKWHNU}")
     private String vnpHashSecret;
 
-    @Value("${vnpay.pay-url:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}")
+    @Value("${vnpay.pay-url:https://sandbox.vnpaytest.vn/paymentv2/vpcpay.html}")
     private String vnpPayUrl;
 
     @Value("${vnpay.return-url:http://localhost:3000/payment/result}")
@@ -56,7 +56,7 @@ public class VNPayConfig {
             ipAddress = "127.0.0.1";
         }
         if (ipAddress != null && ipAddress.contains(",")) ipAddress = ipAddress.split(",")[0].trim();
-        if ("0:0:0:0:0:0:0:1".equals(ipAddress)) ipAddress = "127.0.0.1";
+        if ("0:0:0:0:0:0:0:1".equals(ipAddress) || "::1".equals(ipAddress)) ipAddress = "127.0.0.1";
         return ipAddress;
     }
 

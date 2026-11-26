@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { getReadingHistory } from '@/lib/api';
 import { ReadingHistory } from '@/types/reader';
+import { Navbar } from '@/components/common/Navbar';
+import { Footer } from '@/components/common/Footer';
 function relativeTime(value: string) {
   const seconds = Math.max(0, Math.floor((Date.now() - new Date(value).getTime()) / 1000));
   const fmt = new Intl.RelativeTimeFormat('vi', { numeric: 'auto' });
@@ -43,9 +45,9 @@ function HistoryList({ page }: { page: number }) {
 }
 export default function HistoryPage() {
   const [page, setPage] = useState(0);
-  return <main className="min-h-screen bg-[#0a0a0c] px-4 py-8 text-gray-100"><div className="mx-auto max-w-4xl">
-    <Link href="/" className="text-violet-300">← Trang chủ</Link><h1 className="mb-2 mt-6 text-3xl font-bold">Lịch sử đọc</h1>
+  return <div className="flex min-h-screen flex-col bg-[#0a0a0c] text-gray-100"><Navbar /><main className="flex-1 px-4 py-8"><div className="mx-auto max-w-4xl">
+    <h1 className="mb-2 text-3xl font-bold">Lịch sử đọc</h1>
     <p className="mb-6 text-gray-400">Tiếp tục từ vị trí đã lưu gần nhất.</p><HistoryList key={page} page={page} />
     <nav className="mt-6 flex gap-4" aria-label="Phân trang lịch sử"><button disabled={page === 0} onClick={() => setPage(p => p - 1)} className="rounded bg-gray-700 px-4 py-2 disabled:opacity-40">Trang trước</button><button onClick={() => setPage(p => p + 1)} className="rounded bg-gray-700 px-4 py-2">Trang sau</button></nav>
-  </div></main>;
+  </div></main><Footer /></div>;
 }

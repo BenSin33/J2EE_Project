@@ -5,6 +5,8 @@ import { useAuthStore } from '@/store/authStore'
 import { axiosClient } from '@/lib/axiosClient'
 import { Coins, Crown, CheckCircle2, ShieldCheck, ArrowRight, History, Loader2, Sparkles, AlertCircle, Copy, CreditCard } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { Navbar } from '@/components/common/Navbar'
+import { Footer } from '@/components/common/Footer'
 
 interface PaymentPackage {
   id: string
@@ -125,7 +127,9 @@ export default function PaymentPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-10 font-body text-gray-100">
+    <div className="min-h-screen bg-[#0a0a0c] text-gray-100 flex flex-col">
+      <Navbar />
+      <main className="flex-1 max-w-6xl w-full mx-auto px-4 py-10 font-body text-gray-100">
       {/* HEADER SECTION */}
       <div className="text-center max-w-2xl mx-auto mb-12">
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold mb-4">
@@ -383,6 +387,8 @@ export default function PaymentPage() {
           </div>
         )}
       </div>
+      </main>
+      <Footer />
     </div>
   )
 }

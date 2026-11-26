@@ -33,9 +33,10 @@ public class PaymentService {
     public PaymentUrlResponse createPaymentUrl(UUID userId, String username, CreatePaymentRequest request, HttpServletRequest httpRequest) {
         long amount = request.getAmount();
         long coins = calculateCoins(amount, request.getCoins());
-        String orderInfo = request.getOrderInfo() != null && !request.getOrderInfo().isBlank()
+        String rawOrderInfo = request.getOrderInfo() != null && !request.getOrderInfo().isBlank()
                 ? request.getOrderInfo().trim()
                 : "Nap " + coins + " xu MangaHub";
+        String orderInfo = sanitizeVnpOrderInfo(rawOrderInfo, coins);
 
         String txnRef = System.currentTimeMillis() + VNPayConfig.getRandomNumber(4);
 
@@ -67,11 +68,6 @@ public class PaymentService {
             vnpParams.put("vnp_BankCode", request.getBankCode().trim());
         }
 
-        Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
-        vnpParams.put("vnp_CreateDate", formatter.format(cld.getTime()));
-        cld.add(Calendar.MINUTE, 15);
-        vnpParams.put("vnp_ExpireDate", formatter.format(cld.getTime()));
         java.time.ZonedDateTime nowVn = java.time.ZonedDateTime.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh"));
         java.time.format.DateTimeFormatter vnpFormatter = java.time.format.DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
         vnpParams.put("vnp_CreateDate", nowVn.format(vnpFormatter));
@@ -88,10 +84,11 @@ public class PaymentService {
             String fieldName = itr.next();
             String fieldValue = vnpParams.get(fieldName);
             if (fieldValue != null && !fieldValue.isEmpty()) {
-                hashData.append(fieldName).append('=').append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII));
-                query.append(URLEncoder.encode(fieldName, StandardCharsets.US_ASCII))
+                String encodedValue = URLEncoder.encode(fieldValue, StandardCharsets.UTF_8);
+                hashData.append(fieldName).append('=').append(encodedValue);
+                query.append(URLEncoder.encode(fieldName, StandardCharsets.UTF_8))
                         .append('=')
-                        .append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII));
+                        .append(encodedValue);
                 if (itr.hasNext()) {
                     query.append('&');
                     hashData.append('&');
@@ -128,7 +125,7 @@ public class PaymentService {
             String fieldName = itr.next();
             String fieldValue = fields.get(fieldName);
             if (fieldValue != null && !fieldValue.isEmpty()) {
-                hashData.append(fieldName).append('=').append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII));
+                hashData.append(fieldName).append('=').append(URLEncoder.encode(fieldValue, StandardCharsets.UTF_8));
                 if (itr.hasNext()) hashData.append('&');
             }
         }
@@ -238,6 +235,17 @@ public class PaymentService {
         if (amount >= 20000L) return 220L;
         if (amount >= 10000L) return 100L;
         return amount / 100L;
+    }
+
+    private String sanitizeVnpOrderInfo(String input, long coins) {
+        String normalized = java.text.Normalizer.normalize(input, java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{InCombiningDiacriticalMarks}+", "")
+                .replace('đ', 'd')
+                .replace('Đ', 'D')
+                .replaceAll("[^a-zA-Z0-9 ]", " ")
+                .replaceAll("\\s+", " ")
+                .trim();
+        return normalized.isEmpty() ? ("Nap " + coins + " xu MangaHub") : normalized;
     }
 }
 

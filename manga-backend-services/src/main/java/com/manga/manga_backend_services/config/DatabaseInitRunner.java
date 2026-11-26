@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 /**
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Component;
 public class DatabaseInitRunner implements CommandLineRunner {
 
     private final JdbcTemplate jdbcTemplate;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public void run(String... args) {
@@ -67,6 +69,18 @@ public class DatabaseInitRunner implements CommandLineRunner {
             """);
 
             jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_pwd_reset_email ON password_reset_tokens(email);");
+
+            // 4. Đảm bảo tài khoản quản trị mặc định admin3 / 123456 luôn tồn tại phục vụ quản trị & demo
+            String admin3Hash = passwordEncoder.encode("123456");
+            jdbcTemplate.update("""
+                INSERT INTO users (username, email, password_hash, role, is_banned, is_muted, coins, is_vip, auth_provider)
+                VALUES ('admin3', 'admin3@mangahub.local', ?, 'ROLE_ADMIN', false, false, 1000, true, 'LOCAL')
+                ON CONFLICT (username) DO UPDATE
+                SET password_hash = EXCLUDED.password_hash,
+                    role = 'ROLE_ADMIN',
+                    is_banned = false,
+                    is_muted = false;
+            """, admin3Hash);
 
             log.info("Khởi tạo cấu trúc cơ sở dữ liệu bổ sung hoàn tất thành công!");
         } catch (Exception e) {

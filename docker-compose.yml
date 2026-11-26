@@ -6,7 +6,6 @@ services:
       dockerfile: Dockerfile
     container_name: mangahub-discovery-server
     ports:
-      - "8761:8761"
       - "127.0.0.1:8761:8761"
     environment:
       JAVA_OPTS: "-Xms64m -Xmx192m"
@@ -28,7 +27,6 @@ services:
       dockerfile: Dockerfile
     container_name: mangahub-core-service
     ports:
-      - "8081:8081"
       - "127.0.0.1:8081:8081"
     environment:
       JAVA_OPTS: "-Xms128m -Xmx384m"
@@ -60,14 +58,14 @@ services:
       dockerfile: Dockerfile
     container_name: mangahub-payment-service
     ports:
-      - "8082:8082"
       - "127.0.0.1:8082:8082"
     environment:
       TZ: "Asia/Ho_Chi_Minh"
       JAVA_OPTS: "-Xms64m -Xmx224m"
       EUREKA_URL: "http://discovery-server:8761/eureka"
-      VNPAY_TMN_CODE: "${VNPAY_TMN_CODE:-CGXZLS0Z}"
-      VNPAY_HASH_SECRET: "${VNPAY_HASH_SECRET:-XNBCJFAKAZQSGZSSTGUBMVWFFWCGUSYQ}"
+      VNPAY_TMN_CODE: "${VNPAY_TMN_CODE:-75K0A6Q3}"
+      VNPAY_HASH_SECRET: "${VNPAY_HASH_SECRET:-RRIXUDTYSFKMKQNWRNWCXVDDARYKWHNU}"
+      VNPAY_PAY_URL: "${VNPAY_PAY_URL:-https://sandbox.vnpaytest.vn/paymentv2/vpcpay.html}"
       VNPAY_RETURN_URL: "${VNPAY_RETURN_URL:-http://localhost:3000/payment/result}"
     mem_limit: 384m
     depends_on:
@@ -90,7 +88,6 @@ services:
       dockerfile: Dockerfile
     container_name: mangahub-notification-mail-service
     ports:
-      - "8083:8083"
       - "127.0.0.1:8083:8083"
     environment:
       TZ: "Asia/Ho_Chi_Minh"
@@ -123,7 +120,6 @@ services:
       dockerfile: Dockerfile
     container_name: mangahub-api-gateway
     ports:
-      - "8080:8080"
       - "127.0.0.1:8080:8080"
     environment:
       JAVA_OPTS: "-Xms64m -Xmx192m"
