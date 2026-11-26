@@ -5,6 +5,8 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { axiosClient } from '@/lib/axiosClient'
 import { CheckCircle2, XCircle, Loader2, Coins, ArrowRight, MailCheck } from 'lucide-react'
 import Link from 'next/link'
+import { Navbar } from '@/components/common/Navbar'
+import { Footer } from '@/components/common/Footer'
 
 interface CallbackResult {
   status: 'SUCCESS' | 'FAILED'
@@ -146,14 +148,18 @@ function PaymentResultContent() {
 
 export default function PaymentResultPage() {
   return (
-    <div className="max-w-4xl mx-auto px-4 py-16">
-      <Suspense fallback={
-        <div className="glass max-w-md mx-auto p-10 rounded-3xl border border-gray-800 text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-purple-400 mx-auto" />
-        </div>
-      }>
-        <PaymentResultContent />
-      </Suspense>
+    <div className="min-h-screen bg-[#0a0a0c] text-gray-100 flex flex-col">
+      <Navbar />
+      <main className="flex-1 max-w-4xl w-full mx-auto px-4 py-16">
+        <Suspense fallback={
+          <div className="glass max-w-md mx-auto p-10 rounded-3xl border border-gray-800 text-center">
+            <Loader2 className="w-12 h-12 animate-spin text-purple-400 mx-auto" />
+          </div>
+        }>
+          <PaymentResultContent />
+        </Suspense>
+      </main>
+      <Footer />
     </div>
   )
 }

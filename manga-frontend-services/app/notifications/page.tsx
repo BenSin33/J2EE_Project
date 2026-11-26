@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getNotifications,markNotificationRead,markAllNotificationsRead } from '@/lib/api';
 import { Notification,NotificationPage } from '@/types/notification';
+import { Navbar } from '@/components/common/Navbar';
+import { Footer } from '@/components/common/Footer';
 function Inbox({ unreadOnly }: { unreadOnly: boolean }) {
  const router=useRouter();
  const [data,setData]=useState<NotificationPage | null>(null);
@@ -35,4 +37,4 @@ function Inbox({ unreadOnly }: { unreadOnly: boolean }) {
  </article>)}</div>}
  {data.totalElements>data.size&&<nav className="mt-6 flex gap-4" aria-label="Phân trang thông báo"><button disabled={page===0||busy} onClick={()=>{setData(null);setPage(p=>p-1);}}>Trước</button><span>Trang {page+1}</span><button disabled={(page+1)*data.size>=data.totalElements||busy} onClick={()=>{setData(null);setPage(p=>p+1);}}>Sau</button></nav>}</>;
 }
-export default function NotificationsPage(){const [unread,setUnread]=useState(false);return <main className="min-h-screen bg-[#0a0a0c] px-4 py-8 text-gray-100"><div className="mx-auto max-w-4xl"><nav className="flex gap-4"><Link href="/">← Trang chủ</Link><Link href="/library">Tủ sách</Link></nav><h1 className="mt-6 text-3xl font-bold">Thông báo</h1><label className="my-6 flex items-center gap-2"><input type="checkbox" checked={unread} onChange={event=>setUnread(event.target.checked)} />Chỉ hiện chưa đọc</label><Inbox key={String(unread)} unreadOnly={unread}/></div></main>;}
+export default function NotificationsPage(){const [unread,setUnread]=useState(false);return <div className="flex min-h-screen flex-col bg-[#0a0a0c] text-gray-100"><Navbar /><main className="flex-1 px-4 py-8"><div className="mx-auto max-w-4xl"><h1 className="text-3xl font-bold">Thông báo</h1><label className="my-6 flex items-center gap-2"><input type="checkbox" checked={unread} onChange={event=>setUnread(event.target.checked)} />Chỉ hiện chưa đọc</label><Inbox key={String(unread)} unreadOnly={unread}/></div></main><Footer /></div>;}

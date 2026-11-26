@@ -1,24 +1,30 @@
+'use client'
 import { NotificationBell } from '@/components/notifications/NotificationBell'
 import { useAuthStore } from '@/store/authStore'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 const genres = ['Action', 'Romance', 'Fantasy', 'Isekai', 'Shounen', 'Horror', 'Slice of Life', 'Mecha']
 const statuses = ['Ongoing', 'Completed', 'Hiatus', 'Dropped']
 
 interface NavbarProps {
-  darkMode: boolean
-  onToggleDark: () => void
+  darkMode?: boolean
+  onToggleDark?: () => void
 }
 
-export default function Navbar({ darkMode, onToggleDark }: NavbarProps) {
+export default function Navbar({ darkMode: externalDarkMode, onToggleDark }: NavbarProps = {}) {
+  const [internalDarkMode, setInternalDarkMode] = useState(true)
+  const darkMode = externalDarkMode ?? internalDarkMode
+  const handleToggleDark = onToggleDark ?? (() => setInternalDarkMode(d => !d))
+
   const [filterOpen, setFilterOpen] = useState(false)
   const [filterType, setFilterType] = useState<'Genre' | 'Status'>('Genre')
   const [query, setQuery] = useState('')
   const [profileOpen, setProfileOpen] = useState(false)
   const { user, isAuthenticated, logout } = useAuthStore()
   const router = useRouter()
+  const pathname = usePathname()
 
   return (
     <nav
@@ -27,7 +33,7 @@ export default function Navbar({ darkMode, onToggleDark }: NavbarProps) {
     >
       <div className="max-w-[1440px] mx-auto px-6 lg:px-10 h-16 flex items-center gap-6">
         {/* Logo */}
-        <a href="#" className="flex items-center gap-2 shrink-0">
+        <Link href="/" className="flex items-center gap-2 shrink-0">
           <div
             className="w-8 h-8 rounded-lg flex items-center justify-center"
             style={{ background: 'linear-gradient(135deg,#8b5cf6,#6d28d9)' }}
@@ -44,7 +50,7 @@ export default function Navbar({ darkMode, onToggleDark }: NavbarProps) {
           >
             Manga<span style={{ color: '#8b5cf6' }}>Hub</span>
           </span>
-        </a>
+        </Link>
 
         {/* Search bar */}
         <div className="flex-1 max-w-xl relative">
@@ -127,29 +133,39 @@ export default function Navbar({ darkMode, onToggleDark }: NavbarProps) {
         </div>
 
         {/* Nav links */}
-        <div className="hidden lg:flex items-center gap-1">
+        <div className="hidden md:flex items-center gap-0.5 xl:gap-1">
           {[
-            { label: 'Khám phá', href: '/' },
+            { label: 'Trang chủ', href: '/' },
             { label: 'Tủ sách', href: '/library' },
+            { label: 'Lịch sử', href: '/history' },
             { label: 'Đăng truyện', href: '/uploader' },
             { label: 'Nạp Xu (VNPay)', href: '/payment' },
             { label: 'Quản trị', href: '/admin' },
-          ].map(link => (
-            <Link
-              key={link.label}
-              href={link.href}
-              className="px-3.5 py-2 rounded-lg text-sm font-medium transition-colors hover:text-white"
-              style={{ color: '#a0a0b0', fontFamily: 'Inter, sans-serif' }}
-            >
-              {link.label}
-            </Link>
-          ))}
+          ].map(link => {
+            const isActive = link.href === '/'
+              ? pathname === '/'
+              : pathname === link.href || pathname?.startsWith(link.href + '/')
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`px-2.5 xl:px-3 py-2 rounded-lg text-xs xl:text-sm font-medium transition-colors whitespace-nowrap ${
+                  isActive
+                    ? 'bg-purple-500/15 text-purple-300'
+                    : 'text-[#a0a0b0] hover:text-white hover:bg-white/5'
+                }`}
+                style={{ fontFamily: 'Inter, sans-serif' }}
+              >
+                {link.label}
+              </Link>
+            )
+          })}
         </div>
 
         <div className="flex items-center gap-2 ml-auto shrink-0">
           {/* Dark mode toggle */}
           <button
-            onClick={onToggleDark}
+            onClick={handleToggleDark}
             className="w-9 h-9 rounded-lg flex items-center justify-center transition-colors"
             style={{ color: '#a0a0b0', background: 'rgba(255,255,255,0.04)' }}
             title="Toggle theme"
